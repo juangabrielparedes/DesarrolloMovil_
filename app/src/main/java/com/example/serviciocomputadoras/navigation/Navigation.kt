@@ -24,7 +24,6 @@ fun NavigationGraph(
 ) {
     val navController = rememberNavController()
 
-    // ⭐ NUEVO: Verificar rol para pantalla inicial
     val startDestination = if (authViewModel.isUserLoggedIn()) {
         when (authViewModel.getRolActual()) {
             "Admin" -> Screen.HomeAdmin.route
@@ -49,7 +48,6 @@ fun NavigationGraph(
                     navController.navigate(Screen.ForgotPassword.route)
                 },
                 onLoginSuccess = {
-                    // ⭐ NUEVO: Navegar según rol
                     val rol = authViewModel.getRolActual()
                     val destino = when (rol) {
                         "Admin" -> Screen.HomeAdmin.route
@@ -70,7 +68,6 @@ fun NavigationGraph(
                     navController.popBackStack()
                 },
                 onRegisterSuccess = {
-                    // ⭐ NUEVO: Navegar a Home Cliente (rol por defecto)
                     navController.navigate(Screen.HomeCliente.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -87,10 +84,10 @@ fun NavigationGraph(
             )
         }
 
-        // ⭐ NUEVA: Pantalla para Cliente
+        // ⭐ PANTALLA PRINCIPAL CLIENTE (con Bottom Navigation)
         composable(Screen.HomeCliente.route) {
-            HomeScreenCliente(
-                viewModel = authViewModel,
+            MainScreenCliente(
+                authViewModel = authViewModel,
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
@@ -99,10 +96,10 @@ fun NavigationGraph(
             )
         }
 
-        // ⭐ NUEVA: Pantalla para Vendedor
+        // ⭐ PANTALLA PRINCIPAL VENDEDOR (con Bottom Navigation)
         composable(Screen.HomeVendedor.route) {
-            HomeScreenVendedor(
-                viewModel = authViewModel,
+            MainScreenVendedor(
+                authViewModel = authViewModel,
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
@@ -111,10 +108,10 @@ fun NavigationGraph(
             )
         }
 
-        // ⭐ NUEVA: Pantalla para Admin
+        // ⭐ PANTALLA PRINCIPAL ADMIN (con Bottom Navigation)
         composable(Screen.HomeAdmin.route) {
-            HomeScreenAdmin(
-                viewModel = authViewModel,
+            MainScreenAdmin(
+                authViewModel = authViewModel,
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
