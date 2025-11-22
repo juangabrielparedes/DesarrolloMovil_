@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "954927415233",
+    "project_id": "serviciocomputo-4afe8",
+    "storage_bucket": "serviciocomputo-4afe8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:954927415233:android:0591d74e06d26fe2ca3940",
+        "android_client_info": {
+          "package_name": "com.example.serviciocomputadoras"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0g5ogiAWPkIfupMRB7DJyK01C1KeFfzY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
