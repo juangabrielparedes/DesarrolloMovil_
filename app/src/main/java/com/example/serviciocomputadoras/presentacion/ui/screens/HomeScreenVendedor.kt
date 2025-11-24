@@ -1,5 +1,6 @@
 package com.example.serviciocomputadoras.presentacion.ui.screens
 
+import com.example.serviciocomputadoras.navigation.CarouselProducts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
@@ -29,23 +30,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.serviciocomputadoras.navigation.*
 import androidx.compose.runtime.collectAsState
-import androidx.annotation.DrawableRes
-import com.example.serviciocomputadoras.R
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.lazy.rememberLazyListState
-import kotlinx.coroutines.delay
-
+import androidx.navigation.NavController
 
 
 
 @Composable
 fun MainScreenVendedor(
     authViewModel: AuthViewModel,
+    mainNavController: NavController,
     onLogout: () -> Unit
 ) {
     val navController = rememberNavController()
@@ -90,7 +82,7 @@ fun MainScreenVendedor(
                 startDestination = items.first().route
             ) {
                 composable(BottomNavItem.TiendaVendedor.route) {
-                    TiendaVendedorContent(authViewModel)
+                    TiendaVendedorContent(authViewModel, mainNavController)
                 }
                 composable(BottomNavItem.ProductosVendedor.route) {
                     ProductosVendedorContent()
@@ -108,7 +100,7 @@ fun MainScreenVendedor(
 
 // Contenido de cada Tab VENDEDOR
 @Composable
-fun TiendaVendedorContent(viewModel: AuthViewModel) {
+fun TiendaVendedorContent(viewModel: AuthViewModel, navController: NavController) {
     val usuario = viewModel.authState.collectAsState().value.user
 
     Box(Modifier.fillMaxSize()) {
@@ -188,7 +180,7 @@ fun TiendaVendedorContent(viewModel: AuthViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(32.dp)
             ) {
                 LargeAddButton(
-                    onClick = { /* acción */ }
+                    onClick = { navController.navigate("form_producto")  }
                     /*modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)*/
@@ -388,56 +380,4 @@ fun LargeSearchButton(onClick: () -> Unit,  modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun CarouselProducts() {
-    data class CarouselItem(
-        val id: Int,
-        @DrawableRes val imageResId: Int,
-        val contentDescription: String
-    )
 
-    val items = listOf(
-        CarouselItem(0, R.drawable.avatar, "cupcake"),
-        CarouselItem(1, R.drawable.avatar, "donut"),
-        CarouselItem(2, R.drawable.avatar, "eclair"),
-        CarouselItem(3, R.drawable.avatar, "froyo"),
-        CarouselItem(4, R.drawable.avatar, "gingerbread"),
-    )
-
-    val listState = rememberLazyListState()
-    var index by remember { mutableStateOf(0) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(1500)
-            index = (index + 1) % items.size
-            listState.animateScrollToItem(index)
-        }
-    }
-
-    LazyRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        state = listState,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(horizontal = 32.dp)
-    ) {
-        items(items) { item ->
-            Card(
-                modifier = Modifier
-                    .width(260.dp)
-                    .height(140.dp),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(8.dp)
-            ) {
-                Image(
-                    painter = painterResource(item.imageResId),
-                    contentDescription = item.contentDescription,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-    }
-}

@@ -16,6 +16,8 @@ sealed class Screen(val route: String) {
     object HomeCliente : Screen("home_cliente")
     object HomeVendedor : Screen("home_vendedor")
     object HomeAdmin : Screen("home_admin")
+
+    object FormProducto : Screen("form_producto")
 }
 
 @Composable
@@ -100,6 +102,7 @@ fun NavigationGraph(
         composable(Screen.HomeVendedor.route) {
             MainScreenVendedor(
                 authViewModel = authViewModel,
+                mainNavController = navController,
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
@@ -108,7 +111,7 @@ fun NavigationGraph(
             )
         }
 
-        // ⭐ PANTALLA PRINCIPAL ADMIN (con Bottom Navigation)
+
         composable(Screen.HomeAdmin.route) {
             MainScreenAdmin(
                 authViewModel = authViewModel,
@@ -118,6 +121,10 @@ fun NavigationGraph(
                     }
                 }
             )
+        }
+
+        composable(Screen.FormProducto.route) {
+            ScreenForm(navController = navController)
         }
     }
 }

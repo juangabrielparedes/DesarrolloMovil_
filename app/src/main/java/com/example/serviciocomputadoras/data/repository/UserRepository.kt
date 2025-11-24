@@ -13,7 +13,7 @@ class UserRepository {
                 uid = uid,
                 email = email,
                 nombre = nombre,
-                rol = "Cliente" // Por defecto nuevo usuario es Cliente
+                rol = "Cliente"
             )
 
             db.collection("usuarios")
