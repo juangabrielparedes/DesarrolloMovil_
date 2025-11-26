@@ -1,12 +1,19 @@
 package com.example.serviciocomputadoras.navigation
 
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.serviciocomputadoras.presentacion.ui.screens.*
+import com.example.serviciocomputadoras.presentacion.ui.screens.admin.MainScreenAdmin
+import com.example.serviciocomputadoras.presentacion.ui.screens.auth.ForgotPasswordScreen
+import com.example.serviciocomputadoras.presentacion.ui.screens.auth.LoginScreen
+import com.example.serviciocomputadoras.presentacion.ui.screens.auth.RegisterScreen
+import com.example.serviciocomputadoras.presentacion.ui.screens.cliente.MainScreenCliente
+import com.example.serviciocomputadoras.presentacion.ui.screens.vendedor.MainScreenVendedor
 import com.example.serviciocomputadoras.presentacion.viewmodel.AuthViewModel
 
 sealed class Screen(val route: String) {
@@ -18,6 +25,7 @@ sealed class Screen(val route: String) {
     object HomeAdmin : Screen("home_admin")
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavigationGraph(
     authViewModel: AuthViewModel = viewModel()

@@ -1,0 +1,174 @@
+package com.example.serviciocomputadoras.presentacion.ui.screens.cliente
+
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.serviciocomputadoras.presentacion.viewmodel.BusinessViewModel
+import com.example.serviciocomputadoras.data.model.Business
+
+@Composable
+fun BusinessListScreen(
+    viewModel: BusinessViewModel,
+    onOpenBusiness: (Business) -> Unit
+) {
+    val loading by viewModel.loading.collectAsStateWithLifecycle()
+    val list by viewModel.businesses.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+
+    var query by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF4654A3))  // Tu fondo azul
+            .padding(16.dp)
+    ) {
+        // Card para búsqueda
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(8.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Buscar Servicios",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.Black
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    placeholder = { Text("Buscar por nombre") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF4654A3),
+                        unfocusedBorderColor = Color.Gray,
+                        cursorColor = Color(0xFF4654A3)
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Button(
+                        onClick = { viewModel.search(query) },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF4654A3)
+                        )
+                    ) {
+                        Text("Buscar")
+                    }
+                    Button(
+                        onClick = {
+                            query = ""
+                            viewModel.loadAll()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black
+                        )
+                    ) {
+                        Text("Refrescar")
+                    }
+                }
+            }
+        }
+
+        if (loading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color.White)
+            }
+            return@Column
+        }
+
+        if (error != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(8.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(
+                    "Error: $error",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+            return@Column
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(list) { business ->
+                BusinessItem(
+                    business = business,
+                    onClick = { onOpenBusiness(business) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun BusinessItem(business: Business, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(8.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = business.name,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.Black
+            )
+
+            Spacer(Modifier.height(6.dp))
+
+            Text(
+                text = business.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                maxLines = 2
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = "Desde: \$${business.priceStarting}",
+                style = MaterialTheme.typography.labelMedium,
+                color = Color(0xFF4654A3)
+            )
+        }
+    }
+}

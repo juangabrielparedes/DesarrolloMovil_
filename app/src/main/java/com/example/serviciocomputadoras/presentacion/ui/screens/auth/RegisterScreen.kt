@@ -1,4 +1,4 @@
-package com.example.serviciocomputadoras.presentacion.ui.screens
+package com.example.serviciocomputadoras.presentacion.ui.screens.auth
 
 
 import androidx.compose.foundation.Image

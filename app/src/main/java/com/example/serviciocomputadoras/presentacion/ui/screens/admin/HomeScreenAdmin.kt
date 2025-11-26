@@ -1,4 +1,4 @@
-package com.example.serviciocomputadoras.presentacion.ui.screens
+package com.example.serviciocomputadoras.presentacion.ui.screens.admin
 
 
 import androidx.compose.foundation.layout.*
@@ -26,8 +26,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.serviciocomputadoras.presentacion.viewmodel.AdminViewModel
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.text.style.TextAlign
+import com.example.serviciocomputadoras.data.model.User
+import kotlinx.coroutines.delay
 
 @Composable
 fun MainScreenAdmin(
@@ -253,7 +254,7 @@ fun EstadisticaItem(
 @Composable
 fun UsuariosAdminContent(adminViewModel: AdminViewModel) {
     val adminState by adminViewModel.adminState.collectAsStateWithLifecycle()
-    var selectedUser by remember { mutableStateOf<com.example.serviciocomputadoras.data.model.User?>(null) }
+    var selectedUser by remember { mutableStateOf<User?>(null) }
     var showRoleDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -301,7 +302,7 @@ fun UsuariosAdminContent(adminViewModel: AdminViewModel) {
     // Mostrar mensajes
     LaunchedEffect(adminState.successMessage, adminState.error) {
         if (adminState.successMessage != null || adminState.error != null) {
-            kotlinx.coroutines.delay(3000)
+            delay(3000)
             adminViewModel.limpiarMensajes()
         }
     }
@@ -389,7 +390,7 @@ fun UsuariosAdminContent(adminViewModel: AdminViewModel) {
 
 @Composable
 fun UsuarioItem(
-    usuario: com.example.serviciocomputadoras.data.model.User,
+    usuario: User,
     onCambiarRol: () -> Unit,
     onEliminar: () -> Unit
 ) {
@@ -455,7 +456,7 @@ fun UsuarioItem(
 
 @Composable
 fun CambiarRolDialog(
-    usuario: com.example.serviciocomputadoras.data.model.User,
+    usuario: User,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
