@@ -140,7 +140,7 @@ fun MainScreenVendedor(
 
                     Log.d(TAG, "Navegando a ChatScreenVendedor -> chatId='$chatId' clientUid='$clientUid' ownerUid='$firebaseUid'")
 
-                    // ---------- CORRECCIÓN AQUÍ: PASAR navController ----------
+                    // ---------- CORRECCIÓN AQUÍ: PASAR navControlle ----------
                     ChatScreenVendedor(
                         chatId = chatId,
                         clientUid = clientUid,
