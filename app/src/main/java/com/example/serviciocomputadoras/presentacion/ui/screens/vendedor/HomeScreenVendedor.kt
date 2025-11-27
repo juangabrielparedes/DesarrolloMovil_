@@ -24,8 +24,10 @@ import com.example.serviciocomputadoras.navigation.*
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
 
-// ✅ IMPORT CORRECTO PARA QUE ChatScreenVendedor FUNCIONE
+// Importar pantallas relacionadas con chats y órdenes
 import com.example.serviciocomputadoras.presentacion.ui.screens.chat.ChatScreenVendedor
+import com.example.serviciocomputadoras.presentacion.ui.screens.vendedor.ChatsVendedorScreen
+import com.example.serviciocomputadoras.presentacion.ui.screens.vendedor.OrdersVendedorScreen
 
 private const val TAG = "MainScreenVendedor"
 
@@ -76,10 +78,10 @@ fun MainScreenVendedor(
 
                             Log.d(TAG, "BottomNavItem clicked -> ${item.title}")
 
-                            // ❌ EVITAR navegar a chats si NO hay usuario en Firebase
-                            if (item == BottomNavItem.ChatsVendedor && firebaseUid.isBlank()) {
+                            // Evitar navegar a Chats u Órdenes si NO hay usuario en Firebase
+                            if ((item == BottomNavItem.ChatsVendedor || item == BottomNavItem.OrdenesVendedor) && firebaseUid.isBlank()) {
                                 scope.launch {
-                                    Log.d(TAG, "No se puede abrir chats: FirebaseAuth UID está vacío")
+                                    Log.d(TAG, "No se puede abrir ${item.title}: FirebaseAuth UID está vacío")
                                     snackbarHostState.showSnackbar("Cargando usuario...")
                                 }
                                 return@NavigationBarItem
@@ -121,6 +123,7 @@ fun MainScreenVendedor(
                     VentasVendedorContent()
                 }
 
+                // Chats (lista)
                 composable(BottomNavItem.ChatsVendedor.route) {
                     Log.d(TAG, "Entrando a ChatsVendedorScreen con ownerUid='$firebaseUid'")
                     ChatsVendedorScreen(
@@ -129,25 +132,29 @@ fun MainScreenVendedor(
                     )
                 }
 
+                // Órdenes (lista ordenada por fecha próxima)
+                composable(BottomNavItem.OrdenesVendedor.route) {
+                    Log.d(TAG, "Entrando a OrdersVendedorScreen con ownerUid='$firebaseUid'")
+                    OrdersVendedorScreen(ownerUid = firebaseUid)
+                }
+
                 composable(BottomNavItem.PerfilVendedor.route) {
                     PerfilVendedorContent(authViewModel, onLogout)
                 }
 
+                // Detalle chat: navegar a la pantalla de chat con navController (para poder volver)
                 composable("chat_detail/{chatId}/{clientUid}") { back ->
-
                     val chatId = Uri.decode(back.arguments?.getString("chatId") ?: "")
                     val clientUid = Uri.decode(back.arguments?.getString("clientUid") ?: "")
 
                     Log.d(TAG, "Navegando a ChatScreenVendedor -> chatId='$chatId' clientUid='$clientUid' ownerUid='$firebaseUid'")
 
-                    // ---------- CORRECCIÓN AQUÍ:PASAR navControlle ----------
                     ChatScreenVendedor(
                         chatId = chatId,
                         clientUid = clientUid,
                         ownerUid = firebaseUid,
                         navController = navController
                     )
-                    // -----------------------------------------------------------
                 }
             }
         }
@@ -156,7 +163,7 @@ fun MainScreenVendedor(
 
 
 // ========================
-//  CONTENIDO VISUAL
+//  CONTENIDO VISUAL (se mantienen igual que antes)
 // ========================
 
 @Composable

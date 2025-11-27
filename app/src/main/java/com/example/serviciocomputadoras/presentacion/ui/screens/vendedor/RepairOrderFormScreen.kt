@@ -1,216 +1,321 @@
 package com.example.serviciocomputadoras.presentacion.ui.screens.vendedor
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import android.util.Log
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import com.example.serviciocomputadoras.data.model.PartItem
-import com.example.serviciocomputadoras.data.model.RepairOrder
+import com.example.serviciocomputadoras.presentacion.viewmodel.PartItemUi
 import com.example.serviciocomputadoras.presentacion.viewmodel.RepairOrderViewModel
-import kotlinx.coroutines.launch
-import com.google.firebase.Timestamp
+import java.text.SimpleDateFormat
+import java.util.*
+
+private const val TAG = "RepairOrderFormUI"
 
 @Composable
 fun RepairOrderFormScreen(
-    businessId: String,
-    ownerId: String,
     clientUid: String,
-    clientEmail: String,
-    clientName: String,
-    navController: NavController,
+    ownerUid: String,
+    businessId: String,
+    onClose: () -> Unit,
+    onCreated: (orderId: String?, invoiceId: String?) -> Unit = { _, _ -> },
     viewModel: RepairOrderViewModel = viewModel()
 ) {
-    val scope = rememberCoroutineScope()
-    var deviceType by remember { mutableStateOf("") }
-    var problem by remember { mutableStateOf("") }
-    var diagnosis by remember { mutableStateOf("") }
-    var laborCostText by remember { mutableStateOf("0") }
-    var partName by remember { mutableStateOf("") }
-    var partPriceText by remember { mutableStateOf("0") }
-    var parts by remember { mutableStateOf(listOf<PartItem>()) }
+    //Inicializar con datos conocidos
+    LaunchedEffect(clientUid, ownerUid, businessId) {
+        viewModel.initForChat(clientUid, ownerUid, businessId)
+    }
 
-    val orderCreated by viewModel.orderCreated.collectAsState()
-    val invoiceCreated by viewModel.invoiceCreated.collectAsState()
+    val state by viewModel.uiState.collectAsState()
+    val scroll = rememberScrollState()
+    val context = LocalContext.current
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)
-    ) {
-        Text(
-            text = "Crear Orden de Reparación",
-            style = MaterialTheme.typography.titleLarge
-        )
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = clientName,
-            onValueChange = { /* no editable */ },
-            label = { Text("Cliente") },
-            enabled = false,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = clientEmail,
-            onValueChange = { /* no editable */ },
-            label = { Text("Email") },
-            enabled = false,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = deviceType,
-            onValueChange = { deviceType = it },
-            label = { Text("Tipo de equipo") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = problem,
-            onValueChange = { problem = it },
-            label = { Text("Problema reportado") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = diagnosis,
-            onValueChange = { diagnosis = it },
-            label = { Text("Diagnóstico") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        // Campo numérico: filtro manual para permitir solo dígitos (sin KeyboardOptions)
-        OutlinedTextField(
-            value = laborCostText,
-            onValueChange = { laborCostText = it.filter { c -> c.isDigit() } },
-            label = { Text("Costo mano de obra") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        Text("Repuestos", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-
-        Row(modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = partName,
-                onValueChange = { partName = it },
-                label = { Text("Nombre repuesto") },
-                modifier = Modifier.weight(1f)
-            )
-
-            Spacer(Modifier.width(8.dp))
-
-            OutlinedTextField(
-                value = partPriceText,
-                onValueChange = { partPriceText = it.filter { c -> c.isDigit() } }, // filtro manual
-                label = { Text("Valor") },
-                modifier = Modifier.width(120.dp)
-            )
-
-            Spacer(Modifier.width(8.dp))
-
-            Button(onClick = {
-                if (partName.isNotBlank() && partPriceText.isNotBlank()) {
-                    val new = parts.toMutableList()
-                    new.add(PartItem(partName, partPriceText.toLong()))
-                    parts = new
-                    partName = ""
-                    partPriceText = "0"
-                }
-            }) {
-                Text("Agregar")
-            }
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
-            items(parts) { p ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(p.name)
-                    Text("${p.price}")
-                }
-            }
-        }
-
-        val labor = laborCostText.toLongOrNull() ?: 0L
-        val partsTotal = parts.sumOf { it.price }
-        val total = labor + partsTotal
-
-        Spacer(Modifier.height(8.dp))
-
-        Text("Total: $total", style = MaterialTheme.typography.titleLarge)
-
-        Spacer(Modifier.height(12.dp))
-
-        Row {
-            Button(onClick = {
-                val order = RepairOrder(
-                    orderId = "",
-                    businessId = businessId,
-                    ownerId = ownerId,
-                    clientUid = clientUid,
-                    clientName = clientName,
-                    clientEmail = clientEmail,
-                    deviceType = deviceType,
-                    problemReported = problem,
-                    diagnosis = diagnosis,
-                    laborCost = labor,
-                    parts = parts,
-                    partsTotal = partsTotal,
-                    totalCost = total,
-                    status = "pending_approval",
-                    createdAt = Timestamp.now()
-                )
-                scope.launch {
-                    viewModel.createOrder(order)
-                }
-            }) {
-                Text("Guardar Orden")
-            }
-
-            Spacer(Modifier.width(8.dp))
-
-            Button(onClick = {
-                orderCreated?.let { id ->
-                    scope.launch {
-                        viewModel.generateInvoiceFromOrder(id)
-                    }
-                }
-            }) {
-                Text("Generar Factura")
-            }
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        // observadores
-        if (invoiceCreated != null) {
-            Text("Factura creada: $invoiceCreated", color = Color.Green)
-            // opción para crear sesión de Stripe vendrá por cloud function
+    // Local display state for scheduled date/time (shows formatted string)
+    val scheduledMillis = state.scheduledMillis
+    val scheduledDisplay = remember(scheduledMillis) {
+        if (scheduledMillis > 0L) {
+            val fmt = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            fmt.format(Date(scheduledMillis))
+        } else {
+            ""
         }
     }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(scroll)
+            .padding(12.dp)
+    ) {
+        // Header con cerrar (minimizar -> onClose)
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Text(text = "Formulario de Orden", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            IconButton(onClick = { onClose() }) {
+                Icon(Icons.Default.Close, contentDescription = "Cerrar/minimizar")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Campos autocompletados (cliente, email, uids)
+        OutlinedTextField(
+            value = state.clientName,
+            onValueChange = { /* readonly */ },
+            label = { Text("Cliente") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = false
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = state.clientEmail,
+            onValueChange = { /* readonly */ },
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = false
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Campos visibles para el propietario (ownerId, businessId también pueden mostrarse)
+        OutlinedTextField(
+            value = state.businessId,
+            onValueChange = { },
+            label = { Text("Business ID") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = false
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = state.ownerId,
+            onValueChange = {},
+            label = { Text("Owner ID") },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = false
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Device type
+        OutlinedTextField(
+            value = state.deviceType,
+            onValueChange = { viewModel.setDeviceType(it) },
+            label = { Text("Tipo de dispositivo (ej. Laptop, Desktop)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Problem reported
+        OutlinedTextField(
+            value = state.problemReported,
+            onValueChange = { viewModel.setProblemReported(it) },
+            label = { Text("Problema reportado por el cliente") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 80.dp)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Diagnosis
+        OutlinedTextField(
+            value = state.diagnosis,
+            onValueChange = { viewModel.setDiagnosis(it) },
+            label = { Text("Diagnóstico (opcional)") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 80.dp)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Scheduled Date/Time selector
+        Text(text = "Fecha y hora acordada para la visita", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = scheduledDisplay,
+                onValueChange = { /* readonly, use pickers */ },
+                label = { Text("Fecha y hora") },
+                modifier = Modifier.weight(1f),
+                enabled = false,
+                readOnly = true
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(onClick = {
+                // Mostrar DatePicker, luego TimePicker y guardar en viewModel
+                val now = Calendar.getInstance()
+                val dpd = DatePickerDialog(
+                    context,
+                    { _, year, month, dayOfMonth ->
+                        // luego pedir hora
+                        val cal = Calendar.getInstance()
+                        cal.set(Calendar.YEAR, year)
+                        cal.set(Calendar.MONTH, month)
+                        cal.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+
+                        val tpd = TimePickerDialog(
+                            context,
+                            { _, hourOfDay, minute ->
+                                cal.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                                cal.set(Calendar.MINUTE, minute)
+                                cal.set(Calendar.SECOND, 0)
+                                cal.set(Calendar.MILLISECOND, 0)
+                                viewModel.setScheduledMillis(cal.timeInMillis)
+                                Log.d(TAG, "Scheduled picked: ${cal.timeInMillis}")
+                            },
+                            now.get(Calendar.HOUR_OF_DAY),
+                            now.get(Calendar.MINUTE),
+                            true
+                        )
+                        tpd.show()
+                    },
+                    now.get(Calendar.YEAR),
+                    now.get(Calendar.MONTH),
+                    now.get(Calendar.DAY_OF_MONTH)
+                )
+                dpd.datePicker.minDate = System.currentTimeMillis() - 1000 // evitar seleccionar fechas pasadas (opcional)
+                dpd.show()
+            }) {
+                Text("Seleccionar")
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // botón para limpiar fecha
+            if (scheduledMillis > 0L) {
+                OutlinedButton(onClick = {
+                    viewModel.setScheduledMillis(0L)
+                }) {
+                    Text("Quitar")
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Labor cost
+        OutlinedTextField(
+            value = if (state.laborCost == 0L) "" else state.laborCost.toString(),
+            onValueChange = {
+                // Filtramos sólo dígitos y convertimos a Long
+                val parsed = it.filter { ch -> ch.isDigit() }
+                val v = if (parsed.isBlank()) 0L else parsed.toLong()
+                viewModel.setLaborCost(v)
+            },
+            label = { Text("Costo mano de obra (números)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Partes dinámicas
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = "Partes / Repuestos", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            IconButton(onClick = { viewModel.addEmptyPart() }) {
+                Icon(Icons.Default.Add, contentDescription = "Agregar parte")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Lista de partes (editable)
+        state.parts.forEachIndexed { idx, p ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = p.name,
+                    onValueChange = { viewModel.updatePart(idx, it, p.price) },
+                    label = { Text("Nombre parte") },
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                OutlinedTextField(
+                    value = if (p.price == 0L) "" else p.price.toString(),
+                    onValueChange = {
+                        val parsed = it.filter { ch -> ch.isDigit() }
+                        val pr = if (parsed.isBlank()) 0L else parsed.toLong()
+                        viewModel.updatePart(idx, p.name, pr)
+                    },
+                    label = { Text("Precio") },
+                    modifier = Modifier.width(120.dp)
+                )
+                IconButton(onClick = { viewModel.removePart(idx) }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Eliminar parte")
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Totales calculados en vivo
+        val partsTotal = viewModel.partsTotal()
+        val grandTotal = viewModel.grandTotal()
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(text = "Subtotal partes: $partsTotal")
+            Text(text = "Mano obra: ${state.laborCost}")
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(text = "Total:", style = MaterialTheme.typography.titleMedium)
+            Text(text = "$grandTotal", style = MaterialTheme.typography.titleMedium)
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Botones: enviar / cancelar
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            TextButton(onClick = { onClose() }) {
+                Text("Cerrar")
+            }
+
+            if (state.isSubmitting) {
+                CircularProgressIndicator(modifier = Modifier.size(36.dp))
+            } else {
+                Button(onClick = {
+                    // Validaciones básicas
+                    if (state.deviceType.isBlank()) {
+                        Log.d(TAG, "Validación: deviceType vacío")
+                        return@Button
+                    }
+                    if (state.problemReported.isBlank()) {
+                        Log.d(TAG, "Validación: problemReported vacío")
+                        return@Button
+                    }
+
+                    viewModel.submitOrder { success, orderId, invoiceId ->
+                        if (success) {
+                            Log.d(TAG, "Order creada orderId=$orderId invoiceId=$invoiceId")
+                            onCreated(orderId, invoiceId)
+                            onClose()
+                        } else {
+                            Log.w(TAG, "Fallo creando order")
+                        }
+                    }
+                }) {
+                    Text("Crear orden y factura")
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+    }
 }
+

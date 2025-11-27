@@ -13,13 +13,15 @@ sealed class BottomNavItem(
     object HomeCliente : BottomNavItem("home_cliente_tab", "Inicio", Icons.Default.Home)
     object ExplorarCliente : BottomNavItem("explorar_cliente", "Explorar", Icons.Default.Search)
     object CarritoCliente : BottomNavItem("carrito_cliente", "Carrito", Icons.Default.ShoppingCart)
+    object FacturasCliente : BottomNavItem("facturas_cliente", "Facturas", Icons.Default.ReceiptLong)
     object PerfilCliente : BottomNavItem("perfil_cliente_tab", "Perfil", Icons.Default.Person)
 
     // Items para VENDEDOR
     object TiendaVendedor : BottomNavItem("tienda_vendedor", "Tienda", Icons.Default.ShoppingCart)
     object ProductosVendedor : BottomNavItem("productos_vendedor", "Productos", Icons.Default.List)
-    object ChatsVendedor : BottomNavItem("chats_vendedor", "Chats", Icons.Default.Chat) // <-- NUEVO
     object VentasVendedor : BottomNavItem("ventas_vendedor", "Ventas", Icons.Default.AttachMoney)
+    object ChatsVendedor : BottomNavItem("chats_vendedor", "Chats", Icons.Default.Message)
+    object OrdenesVendedor : BottomNavItem("ordenes_vendedor", "Órdenes", Icons.Default.Receipt)
     object PerfilVendedor : BottomNavItem("perfil_vendedor_tab", "Perfil", Icons.Default.Person)
 
     // Items para ADMIN
@@ -35,13 +37,15 @@ fun getBottomNavItems(rol: String): List<BottomNavItem> {
             BottomNavItem.HomeCliente,
             BottomNavItem.ExplorarCliente,
             BottomNavItem.CarritoCliente,
+            BottomNavItem.FacturasCliente,
             BottomNavItem.PerfilCliente
         )
         "Vendedor" -> listOf(
             BottomNavItem.TiendaVendedor,
             BottomNavItem.ProductosVendedor,
-            BottomNavItem.ChatsVendedor,    // <-- agregado aquí
             BottomNavItem.VentasVendedor,
+            BottomNavItem.ChatsVendedor,
+            BottomNavItem.OrdenesVendedor,
             BottomNavItem.PerfilVendedor
         )
         "Admin" -> listOf(
@@ -56,6 +60,11 @@ fun getBottomNavItems(rol: String): List<BottomNavItem> {
         )
     }
 }
+
+
+
+
+
 
 
 
@@ -85,6 +94,8 @@ sealed class BottomNavItem(
     object TiendaVendedor : BottomNavItem("tienda_vendedor", "Tienda", Icons.Default.ShoppingCart)
     object ProductosVendedor : BottomNavItem("productos_vendedor", "Productos", Icons.Default.List)
     object VentasVendedor : BottomNavItem("ventas_vendedor", "Ventas", Icons.Default.AttachMoney)
+    object ChatsVendedor : BottomNavItem("chats_vendedor", "Chats", Icons.Default.Chat)
+    object OrdersVendedor : BottomNavItem("orders_vendedor", "Órdenes", Icons.Default.Event) // NUEVO
     object PerfilVendedor : BottomNavItem("perfil_vendedor_tab", "Perfil", Icons.Default.Person)
 
     // Items para ADMIN
@@ -106,8 +117,13 @@ fun getBottomNavItems(rol: String): List<BottomNavItem> {
             BottomNavItem.TiendaVendedor,
             BottomNavItem.ProductosVendedor,
             BottomNavItem.VentasVendedor,
+            BottomNavItem.ChatsVendedor,    // añadimos Chats
+            BottomNavItem.OrdersVendedor,   // añadimos Órdenes
             BottomNavItem.PerfilVendedor
-        )
+        ).let { items ->
+            // si prefieres un orden distinto, ajusta aquí
+            items
+        }
         "Admin" -> listOf(
             BottomNavItem.DashboardAdmin,
             BottomNavItem.UsuariosAdmin,
@@ -120,5 +136,6 @@ fun getBottomNavItems(rol: String): List<BottomNavItem> {
         )
     }
 }
+*/
 
- */
+

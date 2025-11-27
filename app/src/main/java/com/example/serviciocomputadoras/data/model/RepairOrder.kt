@@ -17,5 +17,6 @@ data class RepairOrder(
     val partsTotal: Long = 0L,
     val totalCost: Long = 0L,
     val status: String = "pending_approval",
-    val createdAt: Timestamp? = null
+    val createdAt: Timestamp? = null,
+    val scheduledDate: Timestamp? = null
 )

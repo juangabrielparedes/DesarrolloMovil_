@@ -84,8 +84,6 @@ fun MainScreenCliente(
                 }
 
                 // --- EXPLORAR (lista de negocios) ---
-                // Llamamos siempre a BusinessListScreen (como tenías antes),
-                // pero le pasamos currentUid para que el botón Abrir chat tenga el uid correcto.
                 composable(BottomNavItem.ExplorarCliente.route) {
                     BusinessListScreen(
                         viewModel = businessViewModel,
@@ -97,13 +95,7 @@ fun MainScreenCliente(
                             val ownerId = business.ownerId
                             val businessId = business.id
 
-                            // --- DEBUG LOGS ---
-                            Log.d("DEBUG_CHAT", "currentUid='$currentUidLocal'")
-                            Log.d("DEBUG_CHAT", "ownerId='$ownerId'")
-                            Log.d("DEBUG_CHAT", "businessId='$businessId'")
-
                             if (currentUidLocal.isNotBlank() && ownerId.isNotBlank() && businessId.isNotBlank()) {
-                                Log.d("DEBUG_CHAT", "Abrir chat: todos los datos presentes")
                                 navController.navigate("chat/$currentUidLocal/$ownerId/$businessId")
                             } else {
                                 Log.e("DEBUG_CHAT", "No se puede abrir chat, datos incompletos")
@@ -115,6 +107,14 @@ fun MainScreenCliente(
                 // --- CARRITO ---
                 composable(BottomNavItem.CarritoCliente.route) {
                     CarritoClienteContent()
+                }
+
+                // --- FACTURAS (NUEVO) ---
+                composable(BottomNavItem.FacturasCliente.route) {
+                    InvoicesClienteScreen(currentUid = currentUid, onOpenInvoice = { invoiceId ->
+                        // podrías navegar a detalle si quieres
+                        navController.navigate("invoice_detail/$invoiceId")
+                    })
                 }
 
                 // --- PERFIL ---
@@ -139,7 +139,6 @@ fun MainScreenCliente(
                     val businessId = backStackEntry.arguments?.getString("businessId") ?: ""
 
                     if (currentUserUid.isNotBlank() && ownerId.isNotBlank() && businessId.isNotBlank()) {
-                        // ChatScreen ahora crea/obtiene el chat (usando clientUid + businessId como id)
                         ChatScreen(
                             currentUserUid = currentUserUid,
                             otherUserUid = ownerId,
@@ -152,6 +151,11 @@ fun MainScreenCliente(
                     }
                 }
 
+                // (Opcional) Ruta de detalle de invoice — puedes implementarla si quieres
+                composable("invoice_detail/{invoiceId}") { back ->
+                    val invoiceId = back.arguments?.getString("invoiceId") ?: ""
+                    InvoiceDetailScreen(invoiceId = invoiceId, currentUid = currentUid)
+                }
             }
         }
     }

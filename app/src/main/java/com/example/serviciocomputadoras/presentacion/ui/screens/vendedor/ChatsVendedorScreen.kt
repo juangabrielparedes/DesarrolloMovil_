@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -32,30 +33,16 @@ fun ChatsVendedorScreen(
     viewModel: ChatsVendedorViewModel = viewModel()
 ) {
     val chats by viewModel.chatsUi.collectAsState()
-
-
-    val debugLogState = viewModel.debugLog.collectAsState()
-
+    val blue = Color(0xFF4654A3)
 
     LaunchedEffect(ownerUid) {
         Log.d(TAG, "ChatsVendedorScreen LaunchedEffect ownerUid='$ownerUid'")
-    }
-
-    LaunchedEffect(ownerUid) {
-        if (ownerUid.isNotBlank()) {
-            Log.d(TAG, "Llamando startListening desde UI con ownerUid='$ownerUid'")
-            viewModel.startListening(ownerUid)
-        } else {
-            Log.d(TAG, "ownerUid vacío en UI; startListening no será llamado")
-            viewModel.stopListening()
-        }
+        if (ownerUid.isNotBlank()) viewModel.startListening(ownerUid)
+        else viewModel.stopListening()
     }
 
     DisposableEffect(Unit) {
-        onDispose {
-            Log.d(TAG, "ChatsVendedorScreen disposed -> stopListening")
-            viewModel.stopListening()
-        }
+        onDispose { viewModel.stopListening() }
     }
 
     Scaffold(
@@ -63,7 +50,7 @@ fun ChatsVendedorScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primary)
+                    .background(blue)
                     .padding(vertical = 12.dp, horizontal = 12.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
@@ -71,20 +58,19 @@ fun ChatsVendedorScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Chats",
                             style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onPrimary
+                            color = Color.White
                         )
                     }
 
                     Button(onClick = {
-                        Log.d(TAG, "Botón Refrescar pulsado -> fetchOnce ownerUid='$ownerUid'")
+                        Log.d(TAG, "Botón Refrescar pulsado -> fetchOnce")
                         viewModel.fetchOnce(ownerUid)
-                    }) {
-                        Text("Refrescar")
+                    }, colors = ButtonDefaults.buttonColors(containerColor = Color.White)) {
+                        Text("Refrescar", color = blue)
                     }
                 }
             }
@@ -126,12 +112,16 @@ fun ChatsVendedorScreen(
 
 @Composable
 fun ChatListItem(chat: ChatUi, onClick: () -> Unit) {
+    val blue = Color(0xFF4654A3)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(8.dp)
     ) {
         Row(
             modifier = Modifier
@@ -139,18 +129,16 @@ fun ChatListItem(chat: ChatUi, onClick: () -> Unit) {
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
+                    .background(blue),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = chat.clientName.firstOrNull()?.uppercase() ?: "C",
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = Color.White
                 )
             }
 
@@ -165,13 +153,15 @@ fun ChatListItem(chat: ChatUi, onClick: () -> Unit) {
                 Text(
                     text = chat.lastMessage,
                     maxLines = 1,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
                 )
             }
 
             Text(
                 text = formatTimestamp(chat.updatedAtMillis),
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.DarkGray
             )
         }
     }
