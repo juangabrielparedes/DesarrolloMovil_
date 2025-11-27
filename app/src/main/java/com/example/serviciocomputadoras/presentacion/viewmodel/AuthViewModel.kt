@@ -91,7 +91,11 @@ class AuthViewModel(
     }
 
     fun resetState() {
-        _authState.value = AuthState()
+        _authState.value = _authState.value.copy(
+            isLoading = false,
+            isSuccess = false,
+            error = null
+        )
     }
 
     fun isUserLoggedIn(): Boolean {

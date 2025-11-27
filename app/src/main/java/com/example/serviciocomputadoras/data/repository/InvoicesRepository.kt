@@ -26,7 +26,10 @@ class InvoicesRepository(
      * hacemos un fallback con un get() one-shot (sin orderBy) para que el usuario
      * reciba resultados aunque no exista el índice.
      */
-    fun listenInvoicesForClient(clientUid: String, listener: (List<Invoice>) -> Unit): ListenerRegistration {
+    fun listenInvoicesForClient(
+        clientUid: String,
+        listener: (List<Invoice>) -> Unit
+    ): ListenerRegistration {
         Log.d(TAG, "listenInvoicesForClient clientUid=$clientUid")
 
         // Query SIN orderBy para evitar necesidad de índice compuesto en Firestore
@@ -41,7 +44,10 @@ class InvoicesRepository(
                 if (msg.contains("requires an index", ignoreCase = true) ||
                     msg.contains("index", ignoreCase = true)
                 ) {
-                    Log.d(TAG, "listenInvoicesForClient: índice requerido. Ejecutando fallback get() one-shot sin orderBy.")
+                    Log.d(
+                        TAG,
+                        "listenInvoicesForClient: índice requerido. Ejecutando fallback get() one-shot sin orderBy."
+                    )
                     // Ejecutar petición one-shot sin orderBy (asincrónico)
                     invoicesCol.whereEqualTo("clientUid", clientUid)
                         .get()
@@ -66,7 +72,11 @@ class InvoicesRepository(
     }
 
     // Manejo centralizado del snapshot -> map -> listener
-    private fun handleSnapshotAndNotify(snap: QuerySnapshot?, clientUid: String, listener: (List<Invoice>) -> Unit) {
+    private fun handleSnapshotAndNotify(
+        snap: QuerySnapshot?,
+        clientUid: String,
+        listener: (List<Invoice>) -> Unit
+    ) {
         val docs = snap?.documents ?: emptyList()
         Log.d(TAG, "snapshot docs count=${docs.size} for clientUid=$clientUid")
         docs.forEach { d ->
@@ -127,5 +137,18 @@ class InvoicesRepository(
     // update invoice doc (sin cambios)
     suspend fun updateInvoice(invoiceId: String, updates: Map<String, Any?>) {
         invoicesCol.document(invoiceId).update(updates).await()
+    }
+
+    suspend fun markAsPaid(invoiceId: String): Boolean {
+        return try {
+            invoicesCol.document(invoiceId)
+                .update("status", "paid")
+                .await()
+            Log.d(TAG, "Invoice $invoiceId marcada como paid")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "markAsPaid failed: ${e.message}", e)
+            false
+        }
     }
 }

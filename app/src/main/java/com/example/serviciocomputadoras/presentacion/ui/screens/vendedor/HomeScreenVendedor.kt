@@ -1,7 +1,9 @@
 package com.example.serviciocomputadoras.presentacion.ui.screens.vendedor
 
 import android.net.Uri
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,6 +33,7 @@ import com.example.serviciocomputadoras.presentacion.ui.screens.vendedor.OrdersV
 
 private const val TAG = "MainScreenVendedor"
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreenVendedor(
     authViewModel: AuthViewModel,
@@ -49,6 +52,13 @@ fun MainScreenVendedor(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    LaunchedEffect(usuario) {
+        android.util.Log.d("DEBUG", "=== VENDEDOR LOGUEADO ===")
+        android.util.Log.d("DEBUG", "UID: ${usuario?.uid}")
+        android.util.Log.d("DEBUG", "Email: ${usuario?.email}")
+        android.util.Log.d("DEBUG", "Nombre: ${usuario?.nombre}")
+    }
+
     // Log para saber siempre si FirebaseAuth ya tiene UID
     LaunchedEffect(firebaseUid) {
         Log.d(TAG, "FirebaseAuth UID = '${firebaseUid}'  (null si no logueado)")
@@ -63,6 +73,13 @@ fun MainScreenVendedor(
 
     Scaffold(
         containerColor = Color(0xFF4654A3),
+        topBar = {
+            Text(
+                text = "UID: ${usuario?.uid ?: "null"}",
+                color = Color.White,
+                modifier = Modifier.padding(16.dp)
+            )
+        },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
             NavigationBar(containerColor = Color.White) {

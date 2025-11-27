@@ -34,7 +34,7 @@ class UserRepository {
                 .get()
                 .await()
 
-            documento.toObject(User::class.java)
+            documento.toObject(User::class.java)?.copy(uid = uid)
         } catch (e: Exception) {
             null
         }
