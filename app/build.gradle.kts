@@ -59,6 +59,18 @@ dependencies {
     //Base de datos
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("androidx.compose.material:material-icons-extended:1.5.4")
+
+    implementation("com.stripe:stripe-android:20.36.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0") // Para llamadas HTTP
+    implementation("com.google.code.gson:gson:2.10.1") // Para JSON
+
+    // Testing
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.8.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("app.cash.turbine:turbine:1.0.0") // Para testear Flows
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

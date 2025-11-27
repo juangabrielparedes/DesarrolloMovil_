@@ -46,7 +46,7 @@ class RequestRepository(
         }
     }
 
-    // obtener solicitudes de un negocio específico
+
     suspend fun getRequestsForBusiness(businessId: String): List<Request> {
         return try {
             val snapshot = requestsRef
@@ -62,39 +62,49 @@ class RequestRepository(
         }
     }
 
-    // obtener solicitudes para un vendedor/dueño (basado en sus negocios)
+
     suspend fun getRequestsForOwner(ownerUid: String): List<Request> {
         return try {
-            // Obtener negocios del dueño
+            android.util.Log.d("DEBUG", "=== BUSCANDO PARA UID: $ownerUid ===")
+
             val businessesSnap = firestore.collection("businesses")
                 .whereEqualTo("ownerId", ownerUid)
                 .get()
                 .await()
 
             val bizIds = businessesSnap.documents.mapNotNull { it.id }
-            if (bizIds.isEmpty()) return emptyList()
+            android.util.Log.d("DEBUG", "Negocios encontrados: $bizIds")
 
-            // Obtener solicitudes de esos negocios
+            if (bizIds.isEmpty()) {
+                android.util.Log.d("DEBUG", "NO HAY NEGOCIOS")
+                return emptyList()
+            }
+
             val result = mutableListOf<Request>()
-            val chunks = bizIds.chunked(10)  // Firestore limita whereIn a 10 elementos
+            for (chunk in bizIds.chunked(10)) {
+                android.util.Log.d("DEBUG", "Buscando requests con businessIds: $chunk")
 
-            for (chunk in chunks) {
                 val snap = requestsRef
                     .whereIn("businessId", chunk)
-                    .orderBy("createdAt")
                     .get()
                     .await()
+
+                android.util.Log.d("DEBUG", "Requests encontrados: ${snap.documents.size}")
+
                 result += snap.documents.mapNotNull { doc ->
                     doc.toObject(Request::class.java)?.copy(id = doc.id)
                 }
             }
+
+            android.util.Log.d("DEBUG", "Total requests: ${result.size}")
             result
         } catch (e: Exception) {
+            android.util.Log.e("DEBUG", "ERROR: ${e.message}", e)
             emptyList()
         }
     }
 
-    // actualizar estado de una solicitud
+
     suspend fun updateRequestStatus(requestId: String, newStatus: String): Result<Unit> {
         return try {
             requestsRef.document(requestId).update("status", newStatus).await()

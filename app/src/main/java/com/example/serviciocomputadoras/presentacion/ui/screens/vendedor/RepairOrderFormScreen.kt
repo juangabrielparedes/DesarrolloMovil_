@@ -33,7 +33,7 @@ fun RepairOrderFormScreen(
     onCreated: (orderId: String?, invoiceId: String?) -> Unit = { _, _ -> },
     viewModel: RepairOrderViewModel = viewModel()
 ) {
-    //Inicializar con datos conocidos
+
     LaunchedEffect(clientUid, ownerUid, businessId) {
         viewModel.initForChat(clientUid, ownerUid, businessId)
     }
@@ -69,7 +69,7 @@ fun RepairOrderFormScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Campos autocompletados (cliente, email, uids)
+
         OutlinedTextField(
             value = state.clientName,
             onValueChange = { /* readonly */ },

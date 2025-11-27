@@ -1,7 +1,9 @@
 package com.example.serviciocomputadoras.presentacion.ui.screens.vendedor
 
 import android.net.Uri
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,6 +28,7 @@ import java.time.format.DateTimeFormatter
 
 private const val TAG = "ChatsVendedorUI"
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ChatsVendedorScreen(
     ownerUid: String,
@@ -110,6 +113,7 @@ fun ChatsVendedorScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ChatListItem(chat: ChatUi, onClick: () -> Unit) {
     val blue = Color(0xFF4654A3)
@@ -167,6 +171,7 @@ fun ChatListItem(chat: ChatUi, onClick: () -> Unit) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun formatTimestamp(tsMillis: Long): String {
     if (tsMillis <= 0L) return ""
     val zdt = Instant.ofEpochMilli(tsMillis).atZone(ZoneId.systemDefault())

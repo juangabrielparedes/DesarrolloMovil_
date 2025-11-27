@@ -63,7 +63,7 @@ fun RegisterScreen(
                 .padding(bottom = 24.dp)
         )
 
-        // ⭐ CARD BLANCA
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()

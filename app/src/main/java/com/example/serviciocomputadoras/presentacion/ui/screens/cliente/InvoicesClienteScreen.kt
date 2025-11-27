@@ -2,7 +2,9 @@ package com.example.serviciocomputadoras.presentacion.ui.screens.cliente
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +26,7 @@ import java.time.format.DateTimeFormatter
 
 private const val TAG = "InvoicesClienteUI"
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun InvoicesClienteScreen(
     currentUid: String,
@@ -73,24 +76,35 @@ fun InvoicesClienteScreen(
                                 Text(text = invoice.createdAt?.let { formatTimestamp(it.seconds * 1000) } ?: "", style = MaterialTheme.typography.bodySmall)
                                 Spacer(modifier = Modifier.height(8.dp))
                                 if (invoice.status == "pending") {
-                                    Button(onClick = {
-                                        // si hay checkoutUrl lo abrimos, si no hay, mostrar mensaje o llamar a backend para generar.
-                                        val url = invoice.checkoutUrl
-                                        if (!url.isNullOrBlank()) {
-                                            try {
-                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                                context.startActivity(intent)
-                                            } catch (e: Exception) {
-                                                Log.w(TAG, "abrir checkout url failed: ${e.message}")
+                                    Column {
+                                        Button(onClick = {
+                                            val url = invoice.checkoutUrl
+                                            if (!url.isNullOrBlank()) {
+                                                try {
+                                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                                    context.startActivity(intent)
+                                                } catch (e: Exception) {
+                                                    Log.w(TAG, "abrir checkout url failed: ${e.message}")
+                                                }
                                             }
-                                        } else {
-                                            Log.d(TAG, "Invoice sin checkoutUrl: pedir backend para generar sesión.")
+                                        }) {
+                                            Icon(Icons.Default.Payment, contentDescription = null)
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Pagar")
                                         }
-                                    }) {
-                                        Icon(Icons.Default.Payment, contentDescription = null)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Pagar")
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        OutlinedButton(onClick = {
+                                            viewModel.markInvoiceAsPaid(invoice.invoiceId)
+                                        }) {
+                                            Text("Ya pagué", style = MaterialTheme.typography.bodySmall)
+                                        }
                                     }
+                                } else if (invoice.status == "paid") {
+                                    Text(
+                                        text = "✓ Pagado",
+                                        color = androidx.compose.ui.graphics.Color(0xFF4CAF50),
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
                                 }
                             }
                         }
@@ -140,6 +154,7 @@ fun InvoicesClienteScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun formatTimestamp(millis: Long): String {
     val zdt = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
     val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")

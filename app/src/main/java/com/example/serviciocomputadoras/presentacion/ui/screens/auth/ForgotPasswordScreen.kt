@@ -72,7 +72,7 @@ fun ForgotPasswordScreen(
                 .padding(bottom = 24.dp)
         )
 
-        // ⭐ CARD BLANCA
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -127,7 +127,7 @@ fun ForgotPasswordScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Botones en fila
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,

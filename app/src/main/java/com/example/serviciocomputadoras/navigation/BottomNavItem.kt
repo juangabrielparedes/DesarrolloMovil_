@@ -9,14 +9,14 @@ sealed class BottomNavItem(
     val title: String,
     val icon: ImageVector
 ) {
-    // Items para CLIENTE
+
     object HomeCliente : BottomNavItem("home_cliente_tab", "Inicio", Icons.Default.Home)
     object ExplorarCliente : BottomNavItem("explorar_cliente", "Explorar", Icons.Default.Search)
     object CarritoCliente : BottomNavItem("carrito_cliente", "Carrito", Icons.Default.ShoppingCart)
     object FacturasCliente : BottomNavItem("facturas_cliente", "Facturas", Icons.Default.ReceiptLong)
     object PerfilCliente : BottomNavItem("perfil_cliente_tab", "Perfil", Icons.Default.Person)
 
-    // Items para VENDEDOR
+
     object TiendaVendedor : BottomNavItem("tienda_vendedor", "Tienda", Icons.Default.ShoppingCart)
     object ProductosVendedor : BottomNavItem("productos_vendedor", "Productos", Icons.Default.List)
     object VentasVendedor : BottomNavItem("ventas_vendedor", "Ventas", Icons.Default.AttachMoney)
@@ -24,7 +24,7 @@ sealed class BottomNavItem(
     object OrdenesVendedor : BottomNavItem("ordenes_vendedor", "Órdenes", Icons.Default.Receipt)
     object PerfilVendedor : BottomNavItem("perfil_vendedor_tab", "Perfil", Icons.Default.Person)
 
-    // Items para ADMIN
+
     object DashboardAdmin : BottomNavItem("dashboard_admin", "Dashboard", Icons.Default.Dashboard)
     object UsuariosAdmin : BottomNavItem("usuarios_admin", "Usuarios", Icons.Default.People)
     object GestionAdmin : BottomNavItem("gestion_admin", "Gestión", Icons.Default.Settings)

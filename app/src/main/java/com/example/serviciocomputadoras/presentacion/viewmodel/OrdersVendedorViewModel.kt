@@ -18,7 +18,7 @@ class OrdersVendedorViewModel(
     private val TAG = "OrdersVendedorVM"
     private val ordersCol = firestore.collection("repairOrders")
 
-    // UI-lite version used for the list
+
     data class OrderUi(
         val orderId: String = "",
         val businessId: String = "",
@@ -31,7 +31,7 @@ class OrdersVendedorViewModel(
         val scheduledAtMillis: Long = 0L
     )
 
-    // Full detail representation loaded on demand
+
     data class RepairOrderDetail(
         val orderId: String = "",
         val businessId: String = "",

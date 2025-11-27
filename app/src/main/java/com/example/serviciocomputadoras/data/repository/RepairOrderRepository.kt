@@ -24,13 +24,11 @@ class RepairOrderRepository(
 
     // Método anterior mantenido (por compatibilidad)
     suspend fun createOrderAndInvoice(order: RepairOrder): Pair<String, String>? {
-        // delega internamente a la versión con schedule = 0
+
         return createOrderAndInvoiceWithSchedule(order, 0L)
     }
 
-    /**
-     * Crea orden e invoice. scheduledMillis = epoch millis (0 = no scheduled date)
-     */
+
     suspend fun createOrderAndInvoiceWithSchedule(order: RepairOrder, scheduledMillis: Long = 0L): Pair<String, String>? {
         try {
             Log.d(TAG, "createOrderAndInvoiceWithSchedule: creando order provisional")
@@ -54,11 +52,11 @@ class RepairOrderRepository(
                 scheduledDate = scheduledTimestamp
             )
 
-            // Guardar order
+
             ordersCol.document(orderId).set(orderToSave).await()
             Log.d(TAG, "order guardada id=$orderId scheduled=$scheduledTimestamp")
 
-            // Generar invoice
+
             val invoiceId = invoicesCol.document().id
             val items = mutableListOf<InvoiceItem>()
             orderToSave.parts.forEach { p ->
@@ -77,13 +75,14 @@ class RepairOrderRepository(
                 items = items,
                 total = orderToSave.totalCost,
                 status = "pending",
+                checkoutUrl = "https://buy.stripe.com/test_00wfZggVq4dZ4Tx4buawo01",
                 createdAt = Timestamp.now()
             )
 
             invoicesCol.document(invoiceId).set(invoice).await()
             Log.d(TAG, "invoice guardada id=$invoiceId total=${invoice.total}")
 
-            // Enviar mensaje por chat (opcional)
+
             try {
                 val chatId = chatRepo.chatIdFor(orderToSave.clientUid, orderToSave.businessId)
 
@@ -157,7 +156,7 @@ class RepairOrderRepository(
         }
     }
 
-    // getBusinessOwner por si se necesita
+
     suspend fun getBusinessOwner(businessId: String): String? {
         return try {
             val snap = businessesCol.document(businessId).get().await()

@@ -2,6 +2,7 @@ package com.example.serviciocomputadoras.presentacion.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.serviciocomputadoras.data.model.Invoice
 import com.example.serviciocomputadoras.data.repository.InvoicesRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -9,6 +10,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 private const val TAG = "InvoicesVM"
@@ -75,6 +77,15 @@ class InvoicesViewModel(
         } catch (e: Exception) {
             Log.w(TAG, "getInvoice failed: ${e.message}")
             null
+        }
+    }
+
+    fun markInvoiceAsPaid(invoiceId: String) {
+        viewModelScope.launch {
+            val success = repo.markAsPaid(invoiceId)
+            if (success) {
+                Log.d(TAG, "Factura $invoiceId actualizada a paid")
+            }
         }
     }
 

@@ -39,11 +39,11 @@ fun MainScreenCliente(
     val businessViewModel: BusinessViewModel = viewModel()
     val items = getBottomNavItems("Cliente")
 
-    // --- Estado de autenticación y log ---
+
     val authState by authViewModel.authState.collectAsState()
     Log.d("DEBUG_AUTH", "authState = $authState")
 
-    // <-- Aquí usamos FirebaseAuth primero (funciona igual que en tu request)
+
     val firebaseUid = FirebaseAuth.getInstance().currentUser?.uid
     val currentUid = firebaseUid ?: authState.user?.uid ?: ""
 
@@ -78,12 +78,12 @@ fun MainScreenCliente(
         ) {
             NavHost(navController = navController, startDestination = items.first().route) {
 
-                // --- HOME ---
+
                 composable(BottomNavItem.HomeCliente.route) {
                     HomeClienteContent(authViewModel)
                 }
 
-                // --- EXPLORAR (lista de negocios) ---
+
                 composable(BottomNavItem.ExplorarCliente.route) {
                     BusinessListScreen(
                         viewModel = businessViewModel,
@@ -104,12 +104,12 @@ fun MainScreenCliente(
                     )
                 }
 
-                // --- CARRITO ---
+
                 composable(BottomNavItem.CarritoCliente.route) {
                     CarritoClienteContent()
                 }
 
-                // --- FACTURAS (NUEVO) ---
+
                 composable(BottomNavItem.FacturasCliente.route) {
                     InvoicesClienteScreen(currentUid = currentUid, onOpenInvoice = { invoiceId ->
                         // podrías navegar a detalle si quieres
@@ -117,12 +117,12 @@ fun MainScreenCliente(
                     })
                 }
 
-                // --- PERFIL ---
+
                 composable(BottomNavItem.PerfilCliente.route) {
                     PerfilClienteContent(authViewModel, onLogout)
                 }
 
-                // --- DETALLE NEGOCIO ---
+
                 composable("business_detail/{businessId}") { backStackEntry ->
                     val businessId = backStackEntry.arguments?.getString("businessId") ?: ""
                     BusinessDetailScreen(
@@ -132,7 +132,7 @@ fun MainScreenCliente(
                     )
                 }
 
-                // --- CHAT ---
+
                 composable("chat/{currentUserUid}/{ownerId}/{businessId}") { backStackEntry ->
                     val currentUserUid = backStackEntry.arguments?.getString("currentUserUid") ?: ""
                     val ownerId = backStackEntry.arguments?.getString("ownerId") ?: ""
@@ -161,7 +161,7 @@ fun MainScreenCliente(
     }
 }
 
-// --- Contenido Home, Carrito y Perfil (idénticos a tu versión original) ---
+
 @Composable
 fun HomeClienteContent(viewModel: AuthViewModel) {
     val usuario = viewModel.authState.collectAsState().value.user

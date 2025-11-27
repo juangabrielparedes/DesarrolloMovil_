@@ -83,14 +83,14 @@ fun BusinessDetailScreen(
                 }
 
                 Column(modifier = Modifier.padding(20.dp)) {
-                    // Botón atrás
+
                     TextButton(onClick = onBack) {
                         Text("← Atrás", color = Color(0xFF4654A3))
                     }
 
                     Spacer(Modifier.height(8.dp))
 
-                    // Nombre del negocio
+
                     Text(
                         business.name,
                         style = MaterialTheme.typography.headlineSmall,
@@ -99,12 +99,12 @@ fun BusinessDetailScreen(
 
                     Spacer(Modifier.height(8.dp))
 
-                    // Descripción
+
                     Text(business.description, color = Color.Gray)
 
                     Spacer(Modifier.height(12.dp))
 
-                    // Mensaje de estado
+
                     requestStatus?.let {
                         Text(
                             text = it,
@@ -114,7 +114,7 @@ fun BusinessDetailScreen(
                         )
                     }
 
-                    // Formulario de solicitud
+
                     if (showForm) {
                         Text("Tu nombre:", color = Color.Black)
                         Text(clientName, color = Color.Gray)

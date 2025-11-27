@@ -13,9 +13,9 @@ class BusinessRepository(
 ) {
     private val businessCollection = firestore.collection("businesses")
     private val requestCollection = firestore.collection("requests")
-    private val usersCollection = firestore.collection("usuarios")  // Tu colección de usuarios
+    private val usersCollection = firestore.collection("usuarios")
 
-    // obtener todos los negocios
+
     suspend fun getAllBusinesses(): List<Business> {
         return try {
             val snapshot = businessCollection.get().await()
@@ -25,7 +25,7 @@ class BusinessRepository(
         }
     }
 
-    // obtener un negocio por ID
+
     suspend fun getBusinessById(id: String): Business? {
         return try {
             val doc = businessCollection.document(id).get().await()
@@ -35,7 +35,7 @@ class BusinessRepository(
         }
     }
 
-    // obtener solicitudes del usuario actual
+
     suspend fun getRequestsByUser(): List<Request> {
         val user = auth.currentUser ?: return emptyList()
         return try {
@@ -52,7 +52,7 @@ class BusinessRepository(
         }
     }
 
-    // crear una solicitud de servicio
+
     suspend fun createRequest(
         businessId: String,
         description: String,
@@ -61,7 +61,7 @@ class BusinessRepository(
         val user = auth.currentUser ?: return Result.failure(Exception("Usuario no logueado"))
 
         return try {
-            // obtener nombre del usuario de Firestore
+
             val userDoc = usersCollection.document(user.uid).get().await()
             val name = userDoc.getString("nombre") ?: "Usuario"
 
@@ -83,7 +83,7 @@ class BusinessRepository(
         }
     }
 
-    // buscar negocios por nombre
+
     suspend fun searchBusinesses(query: String): List<Business> {
         return try {
             val allBusinesses = getAllBusinesses()

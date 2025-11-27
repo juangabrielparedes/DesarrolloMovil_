@@ -168,9 +168,7 @@ class ChatRepository(private val firestore: FirebaseFirestore = FirebaseFirestor
         return registration
     }
 
-    /**
-     * One-shot fetch de chats (útil para refresh manual)
-     */
+
     suspend fun fetchChatsForOwnerOnce(ownerUid: String): List<Chat> {
         val TAG2 = "$TAG.fetchOnce"
         return try {
@@ -196,18 +194,7 @@ class ChatRepository(private val firestore: FirebaseFirestore = FirebaseFirestor
         }
     }
 
-    /**
-     * Resolver nombre para mostrar del usuario (PRIORIDAD: campo "nombre" en documento)
-     *
-     * Estrategia:
-     * 1) intentar users.document(uid)
-     * 2) intentar usuarios.document(uid)
-     * 3) intentar query users where uid == uid (document id distinto a uid)
-     * 4) intentar query usuarios where uid == uid
-     * 5) si nada -> null
-     *
-     * Se registran logs detallados para ayudarte a depurar en Logcat.
-     */
+
     suspend fun getUserDisplayName(uid: String): String? {
         val TAG2 = "$TAG.getUserDisplayName"
         try {

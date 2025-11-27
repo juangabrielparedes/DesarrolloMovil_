@@ -94,7 +94,7 @@ fun MainScreenAdmin(
     }
 }
 
-// TAB 1: DASHBOARD (Estadísticas)
+
 @Composable
 fun DashboardAdminContent(
     authViewModel: AuthViewModel,
@@ -111,7 +111,7 @@ fun DashboardAdminContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Card de bienvenida
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -122,21 +122,21 @@ fun DashboardAdminContent(
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()  // ⭐ Agrega esto
+                    .fillMaxWidth()
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = "⚙️",
                     style = MaterialTheme.typography.displayLarge,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)  // ⭐ Agrega esto
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Dashboard Admin",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.Black,
-                    modifier = Modifier.fillMaxWidth(),  // ⭐ Agrega esto
+                    modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
                 Text(
@@ -151,7 +151,7 @@ fun DashboardAdminContent(
             }
         }
 
-        // Card de estadísticas
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -250,7 +250,7 @@ fun EstadisticaItem(
 }
 
 
-// TAB 2: GESTIÓN DE USUARIOS (Lista + Cambiar Roles)
+
 @Composable
 fun UsuariosAdminContent(adminViewModel: AdminViewModel) {
     val adminState by adminViewModel.adminState.collectAsStateWithLifecycle()
@@ -556,7 +556,7 @@ fun GestionAdminContent(adminViewModel: AdminViewModel) {
     }
 }
 
-// TAB 4: PERFIL ADMIN (Sin cambios)
+
 @Composable
 fun PerfilAdminContent(viewModel: AuthViewModel, onLogout: () -> Unit) {
     val usuario = viewModel.authState.collectAsState().value.user

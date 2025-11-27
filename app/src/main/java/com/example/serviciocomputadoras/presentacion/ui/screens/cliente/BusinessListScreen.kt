@@ -17,15 +17,7 @@ import com.example.serviciocomputadoras.presentacion.viewmodel.BusinessViewModel
 import com.example.serviciocomputadoras.data.model.Business
 import android.util.Log
 
-/**
- * BusinessListScreen:
- * - Mantiene la UI original.
- * - Añade dos parámetros opcionales:
- *     - currentUid: String? = null  (se pasa desde MainScreenCliente)
- *     - onOpenChat: ((Business, String) -> Unit)? = null  (callback para abrir chat)
- *
- * Si onOpenChat == null, no se intentará abrir chat desde aquí (compatibilidad).
- */
+
 @Composable
 fun BusinessListScreen(
     viewModel: BusinessViewModel,
