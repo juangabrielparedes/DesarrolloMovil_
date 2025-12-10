@@ -36,14 +36,14 @@ fun getBottomNavItems(rol: String): List<BottomNavItem> {
         "Cliente" -> listOf(
             BottomNavItem.HomeCliente,
             BottomNavItem.ExplorarCliente,
-            BottomNavItem.CarritoCliente,
+            //BottomNavItem.CarritoCliente,
             BottomNavItem.FacturasCliente,
             BottomNavItem.PerfilCliente
         )
         "Vendedor" -> listOf(
             BottomNavItem.TiendaVendedor,
-            BottomNavItem.ProductosVendedor,
-            BottomNavItem.VentasVendedor,
+           // BottomNavItem.ProductosVendedor,
+            //BottomNavItem.VentasVendedor,
             BottomNavItem.ChatsVendedor,
             BottomNavItem.OrdenesVendedor,
             BottomNavItem.PerfilVendedor

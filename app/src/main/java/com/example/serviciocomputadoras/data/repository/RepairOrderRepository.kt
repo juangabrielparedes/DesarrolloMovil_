@@ -75,7 +75,7 @@ class RepairOrderRepository(
                 items = items,
                 total = orderToSave.totalCost,
                 status = "pending",
-                checkoutUrl = "https://buy.stripe.com/test_00wfZggVq4dZ4Tx4buawo01",
+                //checkoutUrl = "https://buy.stripe.com/test_00wfZggVq4dZ4Tx4buawo01",
                 createdAt = Timestamp.now()
             )
 

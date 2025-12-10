@@ -11,6 +11,8 @@ import androidx.compose.ui.unit.dp
 import com.example.serviciocomputadoras.presentacion.viewmodel.AuthViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
@@ -367,20 +369,26 @@ fun UsuariosAdminContent(adminViewModel: AdminViewModel) {
                         CircularProgressIndicator(modifier = Modifier.padding(16.dp))
                     }
                 } else {
-                    // Lista de usuarios
-                    adminState.usuarios.forEach { usuario ->
-                        UsuarioItem(
-                            usuario = usuario,
-                            onCambiarRol = {
-                                selectedUser = usuario
-                                showRoleDialog = true
-                            },
-                            onEliminar = {
-                                selectedUser = usuario
-                                showDeleteDialog = true
-                            }
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+                    // Lista de usuarios con scroll
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(adminState.usuarios) { usuario ->
+                            UsuarioItem(
+                                usuario = usuario,
+                                onCambiarRol = {
+                                    selectedUser = usuario
+                                    showRoleDialog = true
+                                },
+                                onEliminar = {
+                                    selectedUser = usuario
+                                    showDeleteDialog = true
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -395,59 +403,119 @@ fun UsuarioItem(
     onEliminar: () -> Unit
 ) {
     val colorRol = when (usuario.rol) {
-        "Admin" -> Color.Red
+        "Admin" -> Color(0xFFE53935)
         "Vendedor" -> Color(0xFFFF9800)
         else -> Color(0xFF4CAF50)
     }
 
+    val iconoRol = when (usuario.rol) {
+        "Admin" -> "👑"
+        "Vendedor" -> "🏪"
+        else -> "👤"
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(0.9f)
+            .padding(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = colorRol.copy(alpha = 0.1f)
+            containerColor = Color.White
         ),
-        shape = RoundedCornerShape(8.dp)
+        elevation = CardDefaults.cardElevation(4.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // Avatar con inicial
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .background(colorRol.copy(alpha = 0.2f), RoundedCornerShape(25.dp)),
+                contentAlignment = Alignment.Center
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = usuario.nombre,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = usuario.email,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-                    Text(
-                        text = "Rol: ${usuario.rol}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colorRol
+                Text(
+                    text = usuario.nombre.firstOrNull()?.uppercase() ?: "?",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = colorRol
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Info del usuario
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = usuario.nombre,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.Black
+                )
+                Text(
+                    text = usuario.email,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Badge del rol
+                Surface(
+                    color = colorRol.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = iconoRol,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = usuario.rol,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colorRol
+                        )
+                    }
+                }
+            }
+
+            // Botones de acción
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                IconButton(
+                    onClick = onCambiarRol,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(Color(0xFF4654A3).copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Cambiar rol",
+                        tint = Color(0xFF4654A3),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
-
-                Row {
-                    IconButton(onClick = onCambiarRol) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Cambiar rol",
-                            tint = Color(0xFF4654A3)
-                        )
-                    }
-                    IconButton(onClick = onEliminar) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Eliminar",
-                            tint = Color.Red
-                        )
-                    }
+                Spacer(modifier = Modifier.height(8.dp))
+                IconButton(
+                    onClick = onEliminar,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(Color.Red.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Eliminar",
+                        tint = Color.Red,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
