@@ -1,46 +1,58 @@
-package com.example.serviciocomputadoras.presentacion.ui.screens
+package com.example.serviciocomputadoras.presentacion.ui.screens.cliente
 
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.example.serviciocomputadoras.presentacion.viewmodel.AuthViewModel
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
-import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.serviciocomputadoras.presentacion.viewmodel.AuthViewModel
+import com.example.serviciocomputadoras.presentacion.viewmodel.BusinessViewModel
 import com.example.serviciocomputadoras.navigation.*
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.compose.runtime.collectAsState
+import com.example.serviciocomputadoras.presentacion.ui.screens.chat.ChatScreen
+import com.example.serviciocomputadoras.data.model.Business
+import com.google.firebase.auth.FirebaseAuth
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MainScreenVendedor(
+fun MainScreenCliente(
     authViewModel: AuthViewModel,
     onLogout: () -> Unit
 ) {
     val navController = rememberNavController()
-    val items = getBottomNavItems("Vendedor")
+    val businessViewModel: BusinessViewModel = viewModel()
+    val items = getBottomNavItems("Cliente")
+
+    // --- Estado de autenticación y log ---
+    val authState by authViewModel.authState.collectAsState()
+    Log.d("DEBUG_AUTH", "authState = $authState")
+
+    // <-- Aquí usamos FirebaseAuth primero (funciona igual que en tu request)
+    val firebaseUid = FirebaseAuth.getInstance().currentUser?.uid
+    val currentUid = firebaseUid ?: authState.user?.uid ?: ""
 
     Scaffold(
         containerColor = Color(0xFF4654A3),
         bottomBar = {
-            NavigationBar(
-                containerColor = Color.White
-            ) {
+            NavigationBar(containerColor = Color.White) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
-
                 items.forEach { item ->
                     NavigationBarItem(
                         icon = { Icon(item.icon, contentDescription = item.title) },
@@ -48,9 +60,7 @@ fun MainScreenVendedor(
                         selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
                         onClick = {
                             navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
@@ -66,30 +76,94 @@ fun MainScreenVendedor(
                 .padding(paddingValues)
                 .background(Color(0xFF4654A3))
         ) {
-            NavHost(
-                navController = navController,
-                startDestination = items.first().route
-            ) {
-                composable(BottomNavItem.TiendaVendedor.route) {
-                    TiendaVendedorContent(authViewModel)
+            NavHost(navController = navController, startDestination = items.first().route) {
+
+                // --- HOME ---
+                composable(BottomNavItem.HomeCliente.route) {
+                    HomeClienteContent(authViewModel)
                 }
-                composable(BottomNavItem.ProductosVendedor.route) {
-                    ProductosVendedorContent()
+
+                // --- EXPLORAR (lista de negocios) ---
+                composable(BottomNavItem.ExplorarCliente.route) {
+                    BusinessListScreen(
+                        viewModel = businessViewModel,
+                        currentUid = currentUid,
+                        onOpenBusiness = { business ->
+                            navController.navigate("business_detail/${business.id}")
+                        },
+                        onOpenChat = { business, currentUidLocal ->
+                            val ownerId = business.ownerId
+                            val businessId = business.id
+
+                            if (currentUidLocal.isNotBlank() && ownerId.isNotBlank() && businessId.isNotBlank()) {
+                                navController.navigate("chat/$currentUidLocal/$ownerId/$businessId")
+                            } else {
+                                Log.e("DEBUG_CHAT", "No se puede abrir chat, datos incompletos")
+                            }
+                        }
+                    )
                 }
-                composable(BottomNavItem.VentasVendedor.route) {
-                    VentasVendedorContent()
+
+                // --- CARRITO ---
+                composable(BottomNavItem.CarritoCliente.route) {
+                    CarritoClienteContent()
                 }
-                composable(BottomNavItem.PerfilVendedor.route) {
-                    PerfilVendedorContent(authViewModel, onLogout)
+
+                // --- FACTURAS (NUEVO) ---
+                composable(BottomNavItem.FacturasCliente.route) {
+                    InvoicesClienteScreen(currentUid = currentUid, onOpenInvoice = { invoiceId ->
+                        // podrías navegar a detalle si quieres
+                        navController.navigate("invoice_detail/$invoiceId")
+                    })
+                }
+
+                // --- PERFIL ---
+                composable(BottomNavItem.PerfilCliente.route) {
+                    PerfilClienteContent(authViewModel, onLogout)
+                }
+
+                // --- DETALLE NEGOCIO ---
+                composable("business_detail/{businessId}") { backStackEntry ->
+                    val businessId = backStackEntry.arguments?.getString("businessId") ?: ""
+                    BusinessDetailScreen(
+                        businessId = businessId,
+                        viewModel = businessViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                // --- CHAT ---
+                composable("chat/{currentUserUid}/{ownerId}/{businessId}") { backStackEntry ->
+                    val currentUserUid = backStackEntry.arguments?.getString("currentUserUid") ?: ""
+                    val ownerId = backStackEntry.arguments?.getString("ownerId") ?: ""
+                    val businessId = backStackEntry.arguments?.getString("businessId") ?: ""
+
+                    if (currentUserUid.isNotBlank() && ownerId.isNotBlank() && businessId.isNotBlank()) {
+                        ChatScreen(
+                            currentUserUid = currentUserUid,
+                            otherUserUid = ownerId,
+                            businessId = businessId
+                        )
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Error: datos del chat incompletos")
+                        }
+                    }
+                }
+
+                // (Opcional) Ruta de detalle de invoice — puedes implementarla si quieres
+                composable("invoice_detail/{invoiceId}") { back ->
+                    val invoiceId = back.arguments?.getString("invoiceId") ?: ""
+                    InvoiceDetailScreen(invoiceId = invoiceId, currentUid = currentUid)
                 }
             }
         }
     }
 }
 
-// Contenido de cada Tab VENDEDOR
+// --- Contenido Home, Carrito y Perfil (idénticos a tu versión original) ---
 @Composable
-fun TiendaVendedorContent(viewModel: AuthViewModel) {
+fun HomeClienteContent(viewModel: AuthViewModel) {
     val usuario = viewModel.authState.collectAsState().value.user
 
     Column(
@@ -108,29 +182,31 @@ fun TiendaVendedorContent(viewModel: AuthViewModel) {
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    imageVector = Icons.Default.ShoppingCart,
-                    contentDescription = "Tienda",
+                    imageVector = Icons.Default.Home,
+                    contentDescription = "Inicio",
                     modifier = Modifier.size(64.dp),
                     tint = Color(0xFF4654A3)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Mi Tienda",
+                    text = "¡Bienvenido, ${usuario?.nombre}!",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.Black
                 )
                 Text(
-                    text = "Vendedor: ${usuario?.nombre}",
+                    text = "Rol: Cliente",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.Gray,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
                 Text(
-                    text = "Gestiona tu negocio",
+                    text = "Explora servicios de computadoras",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
                 )
@@ -140,7 +216,7 @@ fun TiendaVendedorContent(viewModel: AuthViewModel) {
 }
 
 @Composable
-fun ProductosVendedorContent() {
+fun CarritoClienteContent() {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -157,23 +233,25 @@ fun ProductosVendedorContent() {
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    imageVector = Icons.Default.List,
-                    contentDescription = "Productos",
+                    imageVector = Icons.Default.ShoppingCart,
+                    contentDescription = "Carrito",
                     modifier = Modifier.size(64.dp),
                     tint = Color(0xFF4654A3)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Mis Servicios",
+                    text = "Mis Solicitudes",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.Black
                 )
                 Text(
-                    text = "Administra tus servicios ofrecidos",
+                    text = "Servicios solicitados",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray,
                     modifier = Modifier.padding(top = 8.dp)
@@ -184,51 +262,7 @@ fun ProductosVendedorContent() {
 }
 
 @Composable
-fun VentasVendedorContent() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(8.dp),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AttachMoney,
-                    contentDescription = "Ventas",
-                    modifier = Modifier.size(64.dp),
-                    tint = Color(0xFF4654A3)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Mis Ventas",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color.Black
-                )
-                Text(
-                    text = "Historial de servicios prestados",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun PerfilVendedorContent(viewModel: AuthViewModel, onLogout: () -> Unit) {
+fun PerfilClienteContent(viewModel: AuthViewModel, onLogout: () -> Unit) {
     val usuario = viewModel.authState.collectAsState().value.user
 
     Column(
@@ -263,7 +297,7 @@ fun PerfilVendedorContent(viewModel: AuthViewModel, onLogout: () -> Unit) {
                     color = Color.Black
                 )
                 Text(
-                    text = usuario?.nombre ?: "Vendedor",
+                    text = usuario?.nombre ?: "Usuario",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.Gray,
                     modifier = Modifier.padding(top = 8.dp)
