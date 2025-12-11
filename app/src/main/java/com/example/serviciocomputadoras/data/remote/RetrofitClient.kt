@@ -5,7 +5,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    // Reemplaza por la URL que te dio Render
+
     private const val BASE_URL = "https://server-7k48.onrender.com/"
 
     val instance: ApiService by lazy {
