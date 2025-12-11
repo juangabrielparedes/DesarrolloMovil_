@@ -413,7 +413,7 @@ class ChatRepository(private val firestore: FirebaseFirestore = FirebaseFirestor
             try {
                 val snap3 = usuarios.document(businessId).get().await()
                 if (snap3.exists()) {
-                    Log.d(TAG2, "usuarios doc existe para businessId=$businessId; keys=${snap3.data?.keys}")
+                    Log.d(TAG2, "usuarioss doc existe para businessId=$businessId; keys=${snap3.data?.keys}")
                     val nombre2 = snap3.getString("nombre")
                     if (!nombre2.isNullOrBlank()) {
                         Log.d(TAG2, "Resolved businessName from usuarios/${businessId} -> nombre='$nombre2'")
