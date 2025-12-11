@@ -84,19 +84,20 @@ class AdminViewModel(
         viewModelScope.launch {
             _adminState.value = _adminState.value.copy(isLoading = true)
 
-            try {
-                // Aquí eliminarías el documento de Firestore
-                // Por ahora solo recargamos
-                _adminState.value = _adminState.value.copy(
-                    isLoading = false,
-                    successMessage = "Usuario eliminado correctamente"
-                )
-                cargarUsuarios()
-            } catch (e: Exception) {
-                _adminState.value = _adminState.value.copy(
-                    isLoading = false,
-                    error = "Error al eliminar usuario: ${e.message}"
-                )
+            when (val result = userRepository.eliminarUsuario(uid)) {
+                is AuthResult.Success -> {
+                    _adminState.value = _adminState.value.copy(
+                        isLoading = false,
+                        successMessage = "Usuario eliminado correctamente"
+                    )
+                    cargarUsuarios() // Recargar lista
+                }
+                is AuthResult.Error -> {
+                    _adminState.value = _adminState.value.copy(
+                        isLoading = false,
+                        error = result.message
+                    )
+                }
             }
         }
     }

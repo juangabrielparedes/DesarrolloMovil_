@@ -64,4 +64,15 @@ class UserRepository {
             emptyList()
         }
     }
+    suspend fun eliminarUsuario(uid: String): AuthResult {
+        return try {
+            db.collection("usuarios")
+                .document(uid)
+                .delete()
+                .await()
+            AuthResult.Success(null)
+        } catch (e: Exception) {
+            AuthResult.Error("Error al eliminar usuario: ${e.message}")
+        }
+    }
 }
