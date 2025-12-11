@@ -1,8 +1,5 @@
 package com.example.serviciocomputadoras.presentacion.ui.screens.cliente
 
-import android.content.Intent
-import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,18 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.serviciocomputadoras.data.model.Invoice
-import com.example.serviciocomputadoras.data.remote.CreateCheckoutForInvoiceRequest
-import com.example.serviciocomputadoras.data.remote.CreateCheckoutForInvoiceResponse
-import com.example.serviciocomputadoras.data.remote.RetrofitClient
 import com.example.serviciocomputadoras.presentacion.viewmodel.InvoicesViewModel
-import retrofit2.Call
-import retrofit2.Response
-
-private const val TAG = "InvoicesClienteUI"
 
 @Composable
 fun InvoicesClienteScreen(
@@ -34,7 +23,6 @@ fun InvoicesClienteScreen(
 ) {
     val invoices by viewModel.invoices.collectAsState()
     val debug by viewModel.debug.collectAsState()
-    val context = LocalContext.current
 
     LaunchedEffect(currentUid) {
         viewModel.startListening(currentUid)
@@ -55,12 +43,6 @@ fun InvoicesClienteScreen(
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(8.dp)
         )
-
-        /* Si quieres debug:
-        if (debug.isNotBlank()) {
-            Text(text = "DEBUG: $debug", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 8.dp))
-        }
-        */
 
         if (invoices.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -89,8 +71,10 @@ fun InvoicesClienteScreen(
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 if (invoice.status == "pending") {
-                                    // Button que abre checkout o pide backend si no existe checkoutUrl
-                                    InvoicePayButton(invoice = invoice)
+
+                                    InvoicePayButton(invoice = invoice, onPaymentSuccess = { paidInv ->
+                                        viewModel.markInvoicePaidLocally(paidInv.invoiceId)
+                                    })
                                 }
                             }
                         }
@@ -100,55 +84,29 @@ fun InvoicesClienteScreen(
         }
     }
 
-    // detalle en dialog
+
     if (selected != null) {
         val inv = selected!!
+        var showEmbeddedDialog by remember { mutableStateOf(false) }
+
+        if (showEmbeddedDialog && selected != null) {
+            EmbeddedCheckoutDialog(
+                invoice = selected!!,
+                onDismiss = { showEmbeddedDialog = false },
+                onPaid = { paidInv ->
+                    viewModel.markInvoicePaidLocally(paidInv.invoiceId)
+                    showEmbeddedDialog = false
+                    selected = null
+                }
+            )
+        }
+
         AlertDialog(
             onDismissRequest = { selected = null },
             confirmButton = {
-                // ConfirmButton: abre checkout o pide backend para generar la sesión
                 TextButton(onClick = {
-                    val existingUrl = inv.checkoutUrl
-                    if (!existingUrl.isNullOrBlank()) {
-                        try {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(existingUrl))
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            Log.w(TAG, "abrir checkout url failed: ${e.message}")
-                        }
-                    } else {
-                        // Llamar al backend para generar session y URL
-                        Log.d(TAG, "Pidiendo backend generar checkout para invoice ${inv.invoiceId}")
-                        val call = RetrofitClient.instance.createCheckoutForInvoice(
-                            CreateCheckoutForInvoiceRequest(invoiceId = inv.invoiceId)
-                        )
-                        call.enqueue(object : retrofit2.Callback<CreateCheckoutForInvoiceResponse> {
-                            override fun onResponse(
-                                call: Call<CreateCheckoutForInvoiceResponse>,
-                                response: Response<CreateCheckoutForInvoiceResponse>
-                            ) {
-                                if (response.isSuccessful) {
-                                    val sessionUrl = response.body()?.url
-                                    if (!sessionUrl.isNullOrBlank()) {
-                                        try {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(sessionUrl))
-                                            context.startActivity(intent)
-                                        } catch (e: Exception) {
-                                            Log.w(TAG, "abrir session url failed: ${e.message}")
-                                        }
-                                    } else {
-                                        Log.w(TAG, "Backend devolvió sin URL")
-                                    }
-                                } else {
-                                    Log.w(TAG, "Error creando checkout: ${response.errorBody()?.string()}")
-                                }
-                            }
-
-                            override fun onFailure(call: Call<CreateCheckoutForInvoiceResponse>, t: Throwable) {
-                                Log.e(TAG, "Fallo al crear checkout: ${t.message}")
-                            }
-                        })
-                    }
+                    // FORZAR embebido
+                    showEmbeddedDialog = true
                 }) {
                     Text("Pagar")
                 }
@@ -175,81 +133,42 @@ fun InvoicesClienteScreen(
     }
 }
 
-/**
- * Botón reutilizable para pagar una invoice.
- * Si checkoutUrl existe abre el navegador, si no llama al backend para generar la sesión.
- */
+
 @Composable
-private fun InvoicePayButton(invoice: Invoice) {
-    val context = LocalContext.current
-    var loading by remember { mutableStateOf(false) }
+private fun InvoicePayButton(
+    invoice: Invoice,
+    onPaymentSuccess: (Invoice) -> Unit
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        EmbeddedCheckoutDialog(
+            invoice = invoice,
+            onDismiss = { showDialog = false },
+            onPaid = { paidInvoice ->
+                onPaymentSuccess(paidInvoice)
+            }
+        )
+    }
 
     Button(
         onClick = {
-            val existingUrl = invoice.checkoutUrl
-            if (!existingUrl.isNullOrBlank()) {
-                try {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(existingUrl))
-                    context.startActivity(intent)
-                } catch (e: Exception) {
-                    Log.w(TAG, "abrir checkout url failed: ${e.message}")
-                }
-            } else {
-                // llamar al backend
-                loading = true
-                val call = RetrofitClient.instance.createCheckoutForInvoice(
-                    CreateCheckoutForInvoiceRequest(invoiceId = invoice.invoiceId)
-                )
-                call.enqueue(object : retrofit2.Callback<CreateCheckoutForInvoiceResponse> {
-                    override fun onResponse(
-                        call: Call<CreateCheckoutForInvoiceResponse>,
-                        response: Response<CreateCheckoutForInvoiceResponse>
-                    ) {
-                        loading = false
-                        if (response.isSuccessful) {
-                            val sessionUrl = response.body()?.url
-                            if (!sessionUrl.isNullOrBlank()) {
-                                try {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(sessionUrl))
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    Log.w(TAG, "abrir session url failed: ${e.message}")
-                                }
-                            } else {
-                                Log.w(TAG, "Backend devolvió sin URL")
-                            }
-                        } else {
-                            Log.w(TAG, "Error creando checkout: ${response.errorBody()?.string()}")
-                        }
-                    }
 
-                    override fun onFailure(call: Call<CreateCheckoutForInvoiceResponse>, t: Throwable) {
-                        loading = false
-                        Log.e(TAG, "Fallo al crear checkout: ${t.message}")
-                    }
-                })
-            }
-        },
-        enabled = !loading
-    ) {
-        if (loading) {
-            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Generando...")
-        } else {
-            Icon(Icons.Default.Payment, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Pagar")
+            showDialog = true
         }
+    ) {
+        Icon(Icons.Default.Payment, contentDescription = null)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("Pagar")
     }
 }
 
-/**
- * Muestra un detalle de la invoice como pantalla alternativa.
- */
+
 @Composable
 fun InvoiceDetailScreen(invoiceId: String, currentUid: String, viewModel: InvoicesViewModel = viewModel()) {
     var invoice by remember { mutableStateOf<Invoice?>(null) }
+    var showEmbeddedDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(invoiceId) {
         invoice = viewModel.getInvoice(invoiceId)
     }
@@ -258,7 +177,6 @@ fun InvoiceDetailScreen(invoiceId: String, currentUid: String, viewModel: Invoic
             CircularProgressIndicator()
         }
     } else {
-        val context = LocalContext.current
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             Text(text = "Factura ${invoice!!.invoiceId}", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(8.dp))
@@ -270,48 +188,28 @@ fun InvoiceDetailScreen(invoiceId: String, currentUid: String, viewModel: Invoic
                 Text(text = "- ${it.desc}: ${it.price}")
             }
             Spacer(modifier = Modifier.height(16.dp))
-            if (invoice!!.status == "pending" && !invoice!!.checkoutUrl.isNullOrBlank()) {
-                Button(onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(invoice!!.checkoutUrl))
-                    context.startActivity(intent)
-                }) { Text("Pagar") }
-            } else if (invoice!!.status == "pending" && invoice!!.checkoutUrl.isNullOrBlank()) {
-                // si no hay checkoutUrl, pedirlo al backend (opcional)
-                Button(onClick = {
-                    val call = RetrofitClient.instance.createCheckoutForInvoice(
-                        CreateCheckoutForInvoiceRequest(invoiceId = invoice!!.invoiceId)
-                    )
-                    call.enqueue(object : retrofit2.Callback<CreateCheckoutForInvoiceResponse> {
-                        override fun onResponse(
-                            call: Call<CreateCheckoutForInvoiceResponse>,
-                            response: Response<CreateCheckoutForInvoiceResponse>
-                        ) {
-                            if (response.isSuccessful) {
-                                response.body()?.url?.let { url ->
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                    context.startActivity(intent)
-                                }
-                            } else {
-                                Log.w(TAG, "Error creando checkout: ${response.errorBody()?.string()}")
-                            }
-                        }
 
-                        override fun onFailure(call: Call<CreateCheckoutForInvoiceResponse>, t: Throwable) {
-                            Log.e(TAG, "Fallo al crear checkout: ${t.message}")
+            if (invoice!!.status == "pending") {
+                Button(onClick = { showEmbeddedDialog = true }) { Text("Pagar") }
+
+                if (showEmbeddedDialog) {
+                    EmbeddedCheckoutDialog(
+                        invoice = invoice!!,
+                        onDismiss = { showEmbeddedDialog = false },
+                        onPaid = { paidInv ->
+                            viewModel.markInvoicePaidLocally(paidInv.invoiceId)
+                            showEmbeddedDialog = false
                         }
-                    })
-                }) { Text("Generar y pagar") }
+                    )
+                }
             }
         }
     }
 }
 
-/**
- * Formatea timestamp (ms) a string legible.
- */
+
 fun formatTimestamp(millis: Long): String {
     val zdt = java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault())
     val fmt = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
     return zdt.format(fmt)
 }
-

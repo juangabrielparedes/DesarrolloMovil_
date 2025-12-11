@@ -78,6 +78,23 @@ class InvoicesViewModel(
         }
     }
 
+    /**
+     * Marca la factura como pagada localmente (actualiza el StateFlow).
+     * Esto es útil para la demo/UX embebida sin integrar Stripe nativo ahora.
+     */
+    fun markInvoicePaidLocally(invoiceId: String) {
+        val current = _invoices.value.toMutableList()
+        val idx = current.indexOfFirst { it.invoiceId == invoiceId }
+        if (idx >= 0) {
+            val inv = current[idx]
+            current[idx] = inv.copy(status = "paid", checkoutUrl = "embedded_checkout")
+            _invoices.value = current.toList()
+            Log.d(TAG, "markInvoicePaidLocally: invoice $invoiceId marcada como pagada (localmente)")
+        } else {
+            Log.w(TAG, "markInvoicePaidLocally: invoice $invoiceId no encontrada")
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         stopListening()

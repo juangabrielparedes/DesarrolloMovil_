@@ -11,5 +11,4 @@ interface ApiService {
         @Body body: CreateCheckoutForInvoiceRequest
     ): Call<CreateCheckoutForInvoiceResponse>
 
-    // Si en el futuro agregas otros endpoints, van aquí.
 }
