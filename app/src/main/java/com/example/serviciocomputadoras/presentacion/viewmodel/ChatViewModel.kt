@@ -16,6 +16,14 @@ class ChatViewModel(private val repo: ChatRepository = ChatRepository()) : ViewM
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages
 
+
+    private val _businessName = MutableStateFlow<String?>(null)
+    val businessName: StateFlow<String?> = _businessName
+
+
+    private val _clientName = MutableStateFlow<String?>(null)
+    val clientName: StateFlow<String?> = _clientName
+
     private var registration: ListenerRegistration? = null
 
     suspend fun getOrCreateChat(clientUid: String, businessId: String, ownerUid: String): Chat {
@@ -54,6 +62,46 @@ class ChatViewModel(private val repo: ChatRepository = ChatRepository()) : ViewM
             repo.sendMessage(chatId, senderUid, receiverUid, text)
         } catch (e: Exception) {
             Log.e("ChatViewModel", "Error enviando mensaje", e)
+        }
+    }
+
+
+    fun loadBusinessName(businessId: String) = viewModelScope.launch {
+        try {
+            val name = try {
+                repo.getBusinessName(businessId)
+            } catch (e: NoSuchMethodError) {
+                Log.w("ChatViewModel", "ChatRepository no implementa getBusinessName(businessId). ${e.message}")
+                null
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Error al obtener businessName desde repo", e)
+                null
+            }
+            _businessName.value = name
+            Log.d("ChatViewModel", "loadBusinessName -> businessId=$businessId name=$name")
+        } catch (e: Exception) {
+            Log.e("ChatViewModel", "loadBusinessName fallo", e)
+            _businessName.value = null
+        }
+    }
+
+
+    fun loadClientName(clientUid: String) = viewModelScope.launch {
+        try {
+            val name = try {
+                repo.getUserDisplayName(clientUid)
+            } catch (e: NoSuchMethodError) {
+                Log.w("ChatViewModel", "ChatRepository no implementa getUserDisplayName(uid). ${e.message}")
+                null
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Error al obtener clientName desde repo", e)
+                null
+            }
+            _clientName.value = name
+            Log.d("ChatViewModel", "loadClientName -> clientUid=$clientUid name=$name")
+        } catch (e: Exception) {
+            Log.e("ChatViewModel", "loadClientName fallo", e)
+            _clientName.value = null
         }
     }
 

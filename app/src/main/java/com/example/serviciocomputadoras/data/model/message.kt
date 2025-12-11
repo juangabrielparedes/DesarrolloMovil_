@@ -10,4 +10,5 @@ data class Message(
     val text: String = "",
     val timestamp: Timestamp? = null,
     val type: String = "text"
+
 )

@@ -18,6 +18,8 @@ class ChatRepository(private val firestore: FirebaseFirestore = FirebaseFirestor
     private val users = firestore.collection("users")
     private val usuarios = firestore.collection("usuarios")
 
+    private val businesses = firestore.collection("businesses")
+
     fun chatIdFor(clientUid: String, businessId: String) = "${clientUid}_$businessId"
 
     suspend fun createOrGetChat(clientUid: String, businessId: String, ownerUid: String): Chat {
@@ -168,9 +170,7 @@ class ChatRepository(private val firestore: FirebaseFirestore = FirebaseFirestor
         return registration
     }
 
-    /**
-     * One-shot fetch de chats (útil para refresh manual)
-     */
+
     suspend fun fetchChatsForOwnerOnce(ownerUid: String): List<Chat> {
         val TAG2 = "$TAG.fetchOnce"
         return try {
@@ -196,24 +196,13 @@ class ChatRepository(private val firestore: FirebaseFirestore = FirebaseFirestor
         }
     }
 
-    /**
-     * Resolver nombre para mostrar del usuario (PRIORIDAD: campo "nombre" en documento)
-     *
-     * Estrategia:
-     * 1) intentar users.document(uid)
-     * 2) intentar usuarios.document(uid)
-     * 3) intentar query users where uid == uid (document id distinto a uid)
-     * 4) intentar query usuarios where uid == uid
-     * 5) si nada -> null
-     *
-     * Se registran logs detallados para ayudarte a depurar en Logcat.
-     */
+
     suspend fun getUserDisplayName(uid: String): String? {
         val TAG2 = "$TAG.getUserDisplayName"
         try {
             Log.d(TAG2, "Resolviendo nombre para uid=$uid")
 
-            // 1) users/{uid}
+
             try {
                 val snap = users.document(uid).get().await()
                 if (snap.exists()) {
@@ -223,7 +212,7 @@ class ChatRepository(private val firestore: FirebaseFirestore = FirebaseFirestor
                         Log.d(TAG2, "Resolved from users/${uid} -> nombre='$nombre'")
                         return nombre
                     }
-                    // fallback to other fields
+
                     val fallbackFields = listOf("displayName", "name", "email", "username")
                     for (k in fallbackFields) {
                         val v = snap.getString(k)
@@ -324,6 +313,132 @@ class ChatRepository(private val firestore: FirebaseFirestore = FirebaseFirestor
             return null
         } catch (e: Exception) {
             Log.e(TAG2, "getUserDisplayName fallo general para $uid: ${e.message}", e)
+            return null
+        }
+    }
+
+
+    suspend fun getBusinessName(businessId: String): String? {
+        val TAG2 = "$TAG.getBusinessName"
+        try {
+            Log.d(TAG2, "Resolviendo businessName para businessId=$businessId")
+
+            // 0) intentar businesses/{businessId} - preferido si existe una colección 'businesses'
+            try {
+                val bSnap = businesses.document(businessId).get().await()
+                if (bSnap.exists()) {
+                    Log.d(TAG2, "businesses doc existe para businessId=$businessId; keys=${bSnap.data?.keys}")
+                    val bName = bSnap.getString("name")
+                    if (!bName.isNullOrBlank()) {
+                        Log.d(TAG2, "Resolved businessName from businesses/${businessId} -> name='$bName'")
+                        return bName
+                    }
+                    // fallback to ownerId -> try resolve owner display name
+                    val ownerId = bSnap.getString("ownerId")
+                    if (!ownerId.isNullOrBlank()) {
+                        Log.d(TAG2, "businesses/${businessId} tiene ownerId=$ownerId, intentando resolver displayName del owner")
+                        val ownerResolved = getUserDisplayName(ownerId)
+                        if (!ownerResolved.isNullOrBlank()) {
+                            Log.d(TAG2, "Resolved businessName from businesses/${businessId} ownerId -> '$ownerResolved'")
+                            return ownerResolved
+                        }
+                    }
+                    Log.d(TAG2, "businesses/${businessId} existe pero no tiene campos útiles para nombre")
+                } else {
+                    Log.d(TAG2, "businesses/${businessId} NO existe")
+                }
+            } catch (e: Exception) {
+                Log.w(TAG2, "Error leyendo businesses/${businessId}: ${e.message}")
+            }
+
+
+            try {
+                val snap = chats
+                    .whereEqualTo("businessId", businessId)
+                    .orderBy("updatedAt", Query.Direction.DESCENDING)
+                    .limit(1)
+                    .get()
+                    .await()
+
+                if (!snap.isEmpty) {
+                    val doc = snap.documents.first()
+                    Log.d(TAG2, "Found chat docId=${doc.id} for businessId=$businessId; keys=${doc.data?.keys}")
+                    val ownerUid = doc.getString("ownerUid")
+                    if (!ownerUid.isNullOrBlank()) {
+                        Log.d(TAG2, "Attempting resolve owner displayName for ownerUid=$ownerUid")
+                        val resolved = getUserDisplayName(ownerUid)
+                        if (!resolved.isNullOrBlank()) {
+                            Log.d(TAG2, "Resolved businessName from ownerUid=$ownerUid -> '$resolved'")
+                            return resolved
+                        } else {
+                            Log.d(TAG2, "No displayName resolved from ownerUid=$ownerUid")
+                        }
+                    } else {
+                        Log.d(TAG2, "chat doc ${doc.id} para businessId=$businessId no tiene ownerUid")
+                    }
+                } else {
+                    Log.d(TAG2, "No chat doc found with businessId=$businessId")
+                }
+            } catch (e: Exception) {
+                Log.w(TAG2, "Error buscando chat por businessId=$businessId: ${e.message}")
+            }
+
+
+            try {
+                val snap2 = users.document(businessId).get().await()
+                if (snap2.exists()) {
+                    Log.d(TAG2, "users doc existe para businessId=$businessId; keys=${snap2.data?.keys}")
+                    val nombre = snap2.getString("nombre")
+                    if (!nombre.isNullOrBlank()) {
+                        Log.d(TAG2, "Resolved businessName from users/${businessId} -> nombre='$nombre'")
+                        return nombre
+                    }
+                    val fallbackFields = listOf("displayName", "name", "email", "username")
+                    for (k in fallbackFields) {
+                        val v = snap2.getString(k)
+                        if (!v.isNullOrBlank()) {
+                            Log.d(TAG2, "Resolved businessName from users/${businessId} -> field=$k value='$v'")
+                            return v
+                        }
+                    }
+                    Log.d(TAG2, "users/${businessId} existe pero no tiene campos útiles")
+                } else {
+                    Log.d(TAG2, "users/${businessId} NO existe")
+                }
+            } catch (e: Exception) {
+                Log.w(TAG2, "Error leyendo users/${businessId}: ${e.message}")
+            }
+
+
+            try {
+                val snap3 = usuarios.document(businessId).get().await()
+                if (snap3.exists()) {
+                    Log.d(TAG2, "usuarios doc existe para businessId=$businessId; keys=${snap3.data?.keys}")
+                    val nombre2 = snap3.getString("nombre")
+                    if (!nombre2.isNullOrBlank()) {
+                        Log.d(TAG2, "Resolved businessName from usuarios/${businessId} -> nombre='$nombre2'")
+                        return nombre2
+                    }
+                    val fallbackFields = listOf("displayName", "name", "email", "username")
+                    for (k in fallbackFields) {
+                        val v = snap3.getString(k)
+                        if (!v.isNullOrBlank()) {
+                            Log.d(TAG2, "Resolved businessName from usuarios/${businessId} -> field=$k value='$v'")
+                            return v
+                        }
+                    }
+                    Log.d(TAG2, "usuarios/${businessId} existe pero no tiene campos útiles")
+                } else {
+                    Log.d(TAG2, "usuarios/${businessId} NO existe")
+                }
+            } catch (e: Exception) {
+                Log.w(TAG2, "Error leyendo usuarios/${businessId}: ${e.message}")
+            }
+
+            Log.d(TAG2, "No se pudo resolver businessName para businessId=$businessId")
+            return null
+        } catch (e: Exception) {
+            Log.e(TAG2, "getBusinessName fallo general para businessId=$businessId: ${e.message}", e)
             return null
         }
     }
